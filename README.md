@@ -57,6 +57,9 @@ Use this for testing purposes only!
 
 Exposes port `8545`
 
+Docs: https://www.trufflesuite.com/docs/ganache/overview
+Github: https://github.com/trufflesuite/ganache-cli
+
 ### Deploy contracts
 
 Deploy contracts:
