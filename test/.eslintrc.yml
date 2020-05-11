@@ -1,0 +1,12 @@
+extends:
+  - ../.eslintrc.yml
+env:
+  mocha: true
+globals:
+  assert: readonly
+  contract: readonly
+  artifacts: readonly
+rules:
+  indent: ["error", 4]
+  quotes: ["error", "double"]
+  semi: ["error", "always"]
