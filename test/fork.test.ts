@@ -19,7 +19,7 @@ describe("Relay", () => {
   });
 
   describe("Fork", async () => {
-    it("valid difficulty target", async () => {
+    it("should reorg to longer chain", async () => {
 
       // submit main chain
       await relay.submitBlockHeader("0x000000204615614beedb06491a82e78b38eb6650e29116cc9cce21000000000000000000b034884fc285ff1acc861af67be0d87f5a610daa459d75a58503a01febcc287a34c0615c886f2e17046e7325"); // 562622
@@ -40,6 +40,15 @@ describe("Relay", () => {
       expect(await relay.heaviestBlock()).to.eq("0x5204b3afd5c0dc010de8eeb28925b97d4b38a16b1d020f000000000000000000");
       await relay.submitBlockHeader("0x0000002051214b0c42383a1ea7bf28f20062f81d7b72497cb1030a00000000000000000000af444756eb5313dae6cb8dc7b4e00ae7d79cfa67a85b4b486a9583896ab3314bd8615c886f2e17f152bc1f"); // 562631
       expect(await relay.heaviestBlock()).to.eq("0xbf01515ce1f4f971b9805205373093c200b2bf92d56408000000000000000000");
+      
+      let filter = relay.filters.ChainReorg("0x5204b3afd5c0dc010de8eeb28925b97d4b38a16b1d020f000000000000000000", "0xbf01515ce1f4f971b9805205373093c200b2bf92d56408000000000000000000", 1);
+      await new Promise((resolve, reject) => {
+        relay.once(filter, () => {
+          // event emitted
+          resolve()
+        })  
+      })
+
       await relay.submitBlockHeader("0x00e00020bf01515ce1f4f971b9805205373093c200b2bf92d56408000000000000000000b2c2fcb555d6e2d677bb9919cc2d9660c81879225d15f53f679e3fdbfad129d032db615c886f2e17155f22df"); // 562632
       expect(await relay.heaviestBlock()).to.eq("0xa4c292016c1585e6f81986f7e216c79d28b15b1d513a10000000000000000000");
       await relay.submitBlockHeader("0x00000020a4c292016c1585e6f81986f7e216c79d28b15b1d513a100000000000000000004e33f75c5f63371d4a05e7ab93afb7c1caa22d2f9d4fce61e194ab8ffe741f35c0de615c886f2e17032ddf4b"); // 562633

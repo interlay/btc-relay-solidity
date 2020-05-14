@@ -15,7 +15,17 @@ describe("Relay", () => {
   beforeEach(async () => {
     signers = await ethers.signers();
     let genesis = "0x00000020db62962b5989325f30f357762ae456b2ec340432278e14000000000000000000d1dd4e30908c361dfeabfb1e560281c1a270bde3c8719dbda7c848005317594440bf615c886f2e17bd6b082d";
-    relay = await deployContract(<Wallet>signers[0], RelayArtifact, [genesis, 2354]) as Relay;
+    let height = 2354;
+
+    relay = await deployContract(<Wallet>signers[0], RelayArtifact, [genesis, height]) as Relay;
+
+    let filter = relay.filters.StoreHeader("0x4615614beedb06491a82e78b38eb6650e29116cc9cce21000000000000000000", height);
+    await new Promise((resolve, reject) => {
+      relay.once(filter, () => {
+        // event emitted
+        resolve()
+      })  
+    })
   });
 
   describe("Basic", async () => {
