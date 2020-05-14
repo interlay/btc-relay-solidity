@@ -1,8 +1,6 @@
-# Stateful BTC-Relay 
+# BTC-Relay 
 
-** Migration in progress**
-
-## Relvant Repositories
+## Relevant Repositories
 
 Our libs: 
 
@@ -16,74 +14,34 @@ External libs:
 * Original [Deprecated] BTC-Relay: https://github.com/ethereum/btcrelay/tree/develop/fetchd
 
 
-## Requirements
-```
-npm install openzeppelin-solidity truffle-assertions buffer-reverse truffle-hdwallet-provider big-number
-```
-
-TODO: check that these are in the `package.json` file, then remove this line (should not require separate install)
-
-
 ## Installation
 
-Make sure `ganache-cli` and `truffle` are installed as global packages. Then, install the required packages with:
-
-```
-npm install -g truffle ganache-cli
-```
+Install dependencies:
 
 ```
 npm install
 ```
 
-## Deploying Contracts 
-
-### Start local Ethereum testnet (Ganache)
-Start ganache:
+Build the contracts and interfaces:
 
 ```
-ganache-cli
+npm run build
 ```
-
-If you run into issues deploying the contract ("Out of gas") due to extensive size, you can pass additional options to Ganache!
-Note: this should only be done for testing.
-
-```
-ganache-cli --gasLimit 800000000 --allowUnlimitedContractSize
-```
-
-This fires up a local Ethereum blockchain, which will mine blocks automatically each time a transaction is broadcast.
-Use this for testing purposes only!
-
-Exposes port `8545`
-
-Docs: https://www.trufflesuite.com/docs/ganache/overview
-Github: https://github.com/trufflesuite/ganache-cli
-
-### Deploy contracts
-
-Deploy contracts:
-
-```
-truffle deploy
-```
-
-
 
 ## Testing
 
-Make sure Ganche is running. 
-
-Run tests: 
+Run the tests:
 
 ```
-truffle test
+npm test
 ```
-This will also re-run migration scripts. 
 
 ### TxChain Performance Tests
 The `scripts` folder contains test scripts for evaluating the performance/cost improvement of the TxChain transaction aggregation.
 
+## Deploying Contracts 
+
+** TODO **
 
 ## Background
 
