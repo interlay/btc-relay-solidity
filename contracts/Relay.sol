@@ -36,7 +36,9 @@ contract Relay {
     uint256 public highScore;
 
     // incrementing counter to track forks
-    uint256 private chainCounter;
+    uint256 private chainCounter = 0;
+
+    uint256 private mainChainId = 0;
 
     // header of the block at the start of the difficulty period
     bytes public epochStart;
@@ -57,7 +59,6 @@ contract Relay {
     * @param _digest block header hash of block header submitted for storage
     * @param _height height of the stored block
     */
-
     event StoreHeader(bytes32 indexed _digest, uint256 indexed _height);
     /*
     * @param _from previous best block hash
@@ -89,7 +90,7 @@ contract Relay {
         bytes32 digest = _header.hash256();
         uint256 difficulty = _header.extractDifficulty();
         console.log("difficulty =", difficulty);
-        uint256 chainId = chainCounter;
+        uint256 chainId = mainChainId;
 
         heaviestBlock = digest;
         epochStart = _header;
@@ -137,30 +138,28 @@ contract Relay {
         bool is_fork = chains[chainId] != headers[hashPrevBlock].height;
 
         if (is_fork) {
-            chainCounter.add(1);
+            chainCounter = chainCounter.add(1);
             chainId = chainCounter;
             console.log("Forking with chainId =", chainId);
 
+            // Initialise fork height
+            chains[chainId] = _height;
+
             storeBlockHeader(hashCurrBlock, _header, _height, chainId, chainWork);
-
-            // Handle successful fork: update new best header
-            if(chainWork > highScore){
-                console.log("Chain reorg");
-                emit ChainReorg(heaviestBlock, hashCurrBlock, chainId);
-
-                heaviestBlock = hashCurrBlock;
-                highScore = chainWork;
-
-                // Extend height of chain
-                chains[chainId] = _height;
-            }
         } else {
             // Check that the submitted block is extending the main chain
             require(chainWork > highScore, ERR_NOT_MAIN_CHAIN);
+
+            if (chainId != mainChainId) {
+                console.log("Chain reorg");
+                emit ChainReorg(heaviestBlock, hashCurrBlock, chainId);
+                mainChainId = chainId;
+            }
+
             heaviestBlock = hashCurrBlock;
             highScore = chainWork;
 
-            // Extend height of chain
+            // Extend height of main chain
             chains[chainId] = _height;
 
             storeBlockHeader(hashCurrBlock, _header, _height, chainId, chainWork);
@@ -201,8 +200,8 @@ contract Relay {
         uint256 prevTarget = prevBlockHeader.extractTarget();
         uint256 currTarget = currBlockHeader.extractTarget();
 
-        console.log("prevTarget =", prevTarget);
-        console.log("currTarget =", currTarget);
+        // console.log("prevTarget =", prevTarget);
+        // console.log("currTarget =", currTarget);
 
         if(!shouldAdjustDifficulty(_height)) {
             if(currTarget != prevTarget && prevTarget != 0) {
