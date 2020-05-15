@@ -12,11 +12,15 @@ import {
 
 interface RelayInterface extends Interface {
   functions: {
+    CONFIRMATIONS: TypedFunctionDescription<{ encode([]: []): string }>;
+
     DIFFICULTY_ADJUSTMENT_INTERVAL: TypedFunctionDescription<{
       encode([]: []): string;
     }>;
 
     DIFF_TARGET: TypedFunctionDescription<{ encode([]: []): string }>;
+
+    MAIN_CHAIN_ID: TypedFunctionDescription<{ encode([]: []): string }>;
 
     TARGET_TIMESPAN: TypedFunctionDescription<{ encode([]: []): string }>;
 
@@ -26,31 +30,61 @@ interface RelayInterface extends Interface {
 
     UNROUNDED_MAX_TARGET: TypedFunctionDescription<{ encode([]: []): string }>;
 
-    chains: TypedFunctionDescription<{ encode([]: [BigNumberish]): string }>;
+    bestBlock: TypedFunctionDescription<{ encode([]: []): string }>;
 
-    epochStart: TypedFunctionDescription<{ encode([]: []): string }>;
+    bestHeight: TypedFunctionDescription<{ encode([]: []): string }>;
 
-    getBlockHeader: TypedFunctionDescription<{
+    bestScore: TypedFunctionDescription<{ encode([]: []): string }>;
+
+    chain: TypedFunctionDescription<{ encode([]: [BigNumberish]): string }>;
+
+    epochStartTarget: TypedFunctionDescription<{ encode([]: []): string }>;
+
+    epochStartTime: TypedFunctionDescription<{ encode([]: []): string }>;
+
+    forks: TypedFunctionDescription<{ encode([]: [BigNumberish]): string }>;
+
+    getHashAtHeight: TypedFunctionDescription<{
+      encode([_height]: [BigNumberish]): string;
+    }>;
+
+    getHeaderByHash: TypedFunctionDescription<{
       encode([_digest]: [Arrayish]): string;
     }>;
 
     headers: TypedFunctionDescription<{ encode([]: [Arrayish]): string }>;
 
-    heaviestBlock: TypedFunctionDescription<{ encode([]: []): string }>;
-
-    highScore: TypedFunctionDescription<{ encode([]: []): string }>;
-
     isCorrectDifficultyTarget: TypedFunctionDescription<{
-      encode([diffStartHeader, prevBlockHeader, currBlockHeader, _height]: [
-        Arrayish,
-        Arrayish,
-        Arrayish,
+      encode([
+        prevStartTarget,
+        prevStartTime,
+        prevEndTarget,
+        prevEndTime,
+        nextTarget,
+        _height
+      ]: [
+        BigNumberish,
+        BigNumberish,
+        BigNumberish,
+        BigNumberish,
+        BigNumberish,
         BigNumberish
       ]): string;
     }>;
 
     submitBlockHeader: TypedFunctionDescription<{
       encode([_header]: [Arrayish]): string;
+    }>;
+
+    verifyTx: TypedFunctionDescription<{
+      encode([_height, _index, _txid, _proof, _confirmations, _insecure]: [
+        BigNumberish,
+        BigNumberish,
+        Arrayish,
+        Arrayish,
+        BigNumberish,
+        boolean
+      ]): string;
     }>;
   };
 
@@ -86,9 +120,13 @@ export class Relay extends Contract {
   interface: RelayInterface;
 
   functions: {
+    CONFIRMATIONS(): Promise<BigNumber>;
+
     DIFFICULTY_ADJUSTMENT_INTERVAL(): Promise<BigNumber>;
 
     DIFF_TARGET(): Promise<BigNumber>;
+
+    MAIN_CHAIN_ID(): Promise<BigNumber>;
 
     TARGET_TIMESPAN(): Promise<BigNumber>;
 
@@ -98,52 +136,65 @@ export class Relay extends Contract {
 
     UNROUNDED_MAX_TARGET(): Promise<BigNumber>;
 
-    chains(arg0: BigNumberish): Promise<BigNumber>;
+    bestBlock(): Promise<string>;
 
-    epochStart(): Promise<string>;
+    bestHeight(): Promise<BigNumber>;
 
-    getBlockHeader(
+    bestScore(): Promise<BigNumber>;
+
+    chain(arg0: BigNumberish): Promise<string>;
+
+    epochStartTarget(): Promise<BigNumber>;
+
+    epochStartTime(): Promise<BigNumber>;
+
+    forks(
+      arg0: BigNumberish
+    ): Promise<{
+      height: BigNumber;
+      ancestor: string;
+      0: BigNumber;
+      1: string;
+    }>;
+
+    getHashAtHeight(_height: BigNumberish): Promise<string>;
+
+    getHeaderByHash(
       _digest: Arrayish
     ): Promise<{
-      version: number;
-      time: number;
-      nonce: number;
-      prevBlockHash: string;
-      merkleRoot: string;
-      target: BigNumber;
       height: BigNumber;
-      0: number;
-      1: number;
-      2: number;
-      3: string;
-      4: string;
-      5: BigNumber;
-      6: BigNumber;
+      merkle: string;
+      target: BigNumber;
+      time: BigNumber;
+      0: BigNumber;
+      1: string;
+      2: BigNumber;
+      3: BigNumber;
     }>;
 
     headers(
       arg0: Arrayish
     ): Promise<{
-      header: string;
+      merkle: string;
       height: BigNumber;
+      target: BigNumber;
+      timestamp: BigNumber;
       chainWork: BigNumber;
       chainId: BigNumber;
-      prevHash: string;
       0: string;
       1: BigNumber;
       2: BigNumber;
       3: BigNumber;
-      4: string;
+      4: BigNumber;
+      5: BigNumber;
     }>;
 
-    heaviestBlock(): Promise<string>;
-
-    highScore(): Promise<BigNumber>;
-
     isCorrectDifficultyTarget(
-      diffStartHeader: Arrayish,
-      prevBlockHeader: Arrayish,
-      currBlockHeader: Arrayish,
+      prevStartTarget: BigNumberish,
+      prevStartTime: BigNumberish,
+      prevEndTarget: BigNumberish,
+      prevEndTime: BigNumberish,
+      nextTarget: BigNumberish,
       _height: BigNumberish
     ): Promise<boolean>;
 
@@ -151,11 +202,24 @@ export class Relay extends Contract {
       _header: Arrayish,
       overrides?: TransactionOverrides
     ): Promise<ContractTransaction>;
+
+    verifyTx(
+      _height: BigNumberish,
+      _index: BigNumberish,
+      _txid: Arrayish,
+      _proof: Arrayish,
+      _confirmations: BigNumberish,
+      _insecure: boolean
+    ): Promise<boolean>;
   };
+
+  CONFIRMATIONS(): Promise<BigNumber>;
 
   DIFFICULTY_ADJUSTMENT_INTERVAL(): Promise<BigNumber>;
 
   DIFF_TARGET(): Promise<BigNumber>;
+
+  MAIN_CHAIN_ID(): Promise<BigNumber>;
 
   TARGET_TIMESPAN(): Promise<BigNumber>;
 
@@ -165,52 +229,65 @@ export class Relay extends Contract {
 
   UNROUNDED_MAX_TARGET(): Promise<BigNumber>;
 
-  chains(arg0: BigNumberish): Promise<BigNumber>;
+  bestBlock(): Promise<string>;
 
-  epochStart(): Promise<string>;
+  bestHeight(): Promise<BigNumber>;
 
-  getBlockHeader(
+  bestScore(): Promise<BigNumber>;
+
+  chain(arg0: BigNumberish): Promise<string>;
+
+  epochStartTarget(): Promise<BigNumber>;
+
+  epochStartTime(): Promise<BigNumber>;
+
+  forks(
+    arg0: BigNumberish
+  ): Promise<{
+    height: BigNumber;
+    ancestor: string;
+    0: BigNumber;
+    1: string;
+  }>;
+
+  getHashAtHeight(_height: BigNumberish): Promise<string>;
+
+  getHeaderByHash(
     _digest: Arrayish
   ): Promise<{
-    version: number;
-    time: number;
-    nonce: number;
-    prevBlockHash: string;
-    merkleRoot: string;
-    target: BigNumber;
     height: BigNumber;
-    0: number;
-    1: number;
-    2: number;
-    3: string;
-    4: string;
-    5: BigNumber;
-    6: BigNumber;
+    merkle: string;
+    target: BigNumber;
+    time: BigNumber;
+    0: BigNumber;
+    1: string;
+    2: BigNumber;
+    3: BigNumber;
   }>;
 
   headers(
     arg0: Arrayish
   ): Promise<{
-    header: string;
+    merkle: string;
     height: BigNumber;
+    target: BigNumber;
+    timestamp: BigNumber;
     chainWork: BigNumber;
     chainId: BigNumber;
-    prevHash: string;
     0: string;
     1: BigNumber;
     2: BigNumber;
     3: BigNumber;
-    4: string;
+    4: BigNumber;
+    5: BigNumber;
   }>;
 
-  heaviestBlock(): Promise<string>;
-
-  highScore(): Promise<BigNumber>;
-
   isCorrectDifficultyTarget(
-    diffStartHeader: Arrayish,
-    prevBlockHeader: Arrayish,
-    currBlockHeader: Arrayish,
+    prevStartTarget: BigNumberish,
+    prevStartTime: BigNumberish,
+    prevEndTarget: BigNumberish,
+    prevEndTime: BigNumberish,
+    nextTarget: BigNumberish,
     _height: BigNumberish
   ): Promise<boolean>;
 
@@ -218,6 +295,15 @@ export class Relay extends Contract {
     _header: Arrayish,
     overrides?: TransactionOverrides
   ): Promise<ContractTransaction>;
+
+  verifyTx(
+    _height: BigNumberish,
+    _index: BigNumberish,
+    _txid: Arrayish,
+    _proof: Arrayish,
+    _confirmations: BigNumberish,
+    _insecure: boolean
+  ): Promise<boolean>;
 
   filters: {
     ChainReorg(
@@ -233,9 +319,13 @@ export class Relay extends Contract {
   };
 
   estimate: {
+    CONFIRMATIONS(): Promise<BigNumber>;
+
     DIFFICULTY_ADJUSTMENT_INTERVAL(): Promise<BigNumber>;
 
     DIFF_TARGET(): Promise<BigNumber>;
+
+    MAIN_CHAIN_ID(): Promise<BigNumber>;
 
     TARGET_TIMESPAN(): Promise<BigNumber>;
 
@@ -245,25 +335,44 @@ export class Relay extends Contract {
 
     UNROUNDED_MAX_TARGET(): Promise<BigNumber>;
 
-    chains(arg0: BigNumberish): Promise<BigNumber>;
+    bestBlock(): Promise<BigNumber>;
 
-    epochStart(): Promise<BigNumber>;
+    bestHeight(): Promise<BigNumber>;
 
-    getBlockHeader(_digest: Arrayish): Promise<BigNumber>;
+    bestScore(): Promise<BigNumber>;
+
+    chain(arg0: BigNumberish): Promise<BigNumber>;
+
+    epochStartTarget(): Promise<BigNumber>;
+
+    epochStartTime(): Promise<BigNumber>;
+
+    forks(arg0: BigNumberish): Promise<BigNumber>;
+
+    getHashAtHeight(_height: BigNumberish): Promise<BigNumber>;
+
+    getHeaderByHash(_digest: Arrayish): Promise<BigNumber>;
 
     headers(arg0: Arrayish): Promise<BigNumber>;
 
-    heaviestBlock(): Promise<BigNumber>;
-
-    highScore(): Promise<BigNumber>;
-
     isCorrectDifficultyTarget(
-      diffStartHeader: Arrayish,
-      prevBlockHeader: Arrayish,
-      currBlockHeader: Arrayish,
+      prevStartTarget: BigNumberish,
+      prevStartTime: BigNumberish,
+      prevEndTarget: BigNumberish,
+      prevEndTime: BigNumberish,
+      nextTarget: BigNumberish,
       _height: BigNumberish
     ): Promise<BigNumber>;
 
     submitBlockHeader(_header: Arrayish): Promise<BigNumber>;
+
+    verifyTx(
+      _height: BigNumberish,
+      _index: BigNumberish,
+      _txid: Arrayish,
+      _proof: Arrayish,
+      _confirmations: BigNumberish,
+      _insecure: boolean
+    ): Promise<BigNumber>;
   };
 }
