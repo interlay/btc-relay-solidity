@@ -14,6 +14,8 @@ interface BTCUtilsInterface extends Interface {
   functions: {
     DIFF1_TARGET: TypedFunctionDescription<{ encode([]: []): string }>;
 
+    ERR_BAD_ARG: TypedFunctionDescription<{ encode([]: []): string }>;
+
     RETARGET_PERIOD: TypedFunctionDescription<{ encode([]: []): string }>;
 
     RETARGET_PERIOD_BLOCKS: TypedFunctionDescription<{
@@ -40,12 +42,16 @@ export class BTCUtils extends Contract {
   functions: {
     DIFF1_TARGET(): Promise<BigNumber>;
 
+    ERR_BAD_ARG(): Promise<BigNumber>;
+
     RETARGET_PERIOD(): Promise<BigNumber>;
 
     RETARGET_PERIOD_BLOCKS(): Promise<BigNumber>;
   };
 
   DIFF1_TARGET(): Promise<BigNumber>;
+
+  ERR_BAD_ARG(): Promise<BigNumber>;
 
   RETARGET_PERIOD(): Promise<BigNumber>;
 
@@ -55,6 +61,8 @@ export class BTCUtils extends Contract {
 
   estimate: {
     DIFF1_TARGET(): Promise<BigNumber>;
+
+    ERR_BAD_ARG(): Promise<BigNumber>;
 
     RETARGET_PERIOD(): Promise<BigNumber>;
 

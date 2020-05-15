@@ -19,8 +19,8 @@ describe("Relay", () => {
 
   beforeEach(async () => {
     signers = await ethers.signers();
-
     relay = await deployContract(<Wallet>signers[0], RelayArtifact, [genesisHeader, genesisHeight]) as Relay;
+    // console.log((await relay.deployTransaction.wait(1)).gasUsed?.toNumber())
   });
 
   it("should store genesis header", async () => {
@@ -47,10 +47,11 @@ describe("Relay", () => {
   let header1 = "0x000000204615614beedb06491a82e78b38eb6650e29116cc9cce21000000000000000000b034884fc285ff1acc861af67be0d87f5a610daa459d75a58503a01febcc287a34c0615c886f2e17046e7325";
 
   it("should store and fail on resubmission", async () => {
-    await relay.submitBlockHeader(header1);
+    let result = await relay.submitBlockHeader(header1);
+    // console.log((await result.wait(1)).gasUsed?.toNumber());
 
-    let result = relay.submitBlockHeader(header1);
-    await expect(result).to.be.revertedWith(ErrorCode.ERR_DUPLICATE_BLOCK);
+    await expect(relay.submitBlockHeader(header1))
+      .to.be.revertedWith(ErrorCode.ERR_DUPLICATE_BLOCK);
   });
 
   it("should fail with block header > 80", async () => {

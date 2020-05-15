@@ -5,12 +5,7 @@ import {BytesLib} from "@summa-tx/bitcoin-spv-sol/contracts/BytesLib.sol";
 import {BTCUtils} from "@summa-tx/bitcoin-spv-sol/contracts/BTCUtils.sol";
 import {ValidateSPV} from "@summa-tx/bitcoin-spv-sol/contracts/ValidateSPV.sol";
 
-import "@nomiclabs/buidler/console.sol";
-
-/// @title BTC Relay contract.
-/// @notice This Relay currently is WIP and assumes:
-/// (i) constant difficulty
-/// (ii) no forks occur on Bitcoin
+/// @title BTC Relay
 contract Relay {
     using SafeMath for uint256;
     using BytesLib for bytes;
@@ -179,7 +174,6 @@ contract Relay {
 
         if (isNewFork) {
             chainId = incrementChainCounter();
-            console.log("Forking with chainId =", chainId);
 
             bytes32[] memory _descendants = new bytes32[](1);
             _descendants[0] = hashCurrBlock;
@@ -228,8 +222,6 @@ contract Relay {
                 uint256 forkHeight = _height;
                 uint256 forkId = incrementChainCounter();
 
-                console.log("Chain reorg at height ", _height);
-
                 while (ancestorId != MAIN_CHAIN_ID) {
                     for (uint i = forks[ancestorId].descendants.length; i > 0; i--) {
                         // get next descendant in fork
@@ -264,7 +256,6 @@ contract Relay {
         uint256 _chainId,
         uint256 _chainWork
     ) private {
-        console.log("Storing header at height", _height);
         chain[_height] = _digest;
         headers[_digest] = Header({
             merkle: _merkle,

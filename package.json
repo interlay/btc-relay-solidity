@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "BTCRelay implementation in Solidity",
   "dependencies": {
-    "@summa-tx/bitcoin-spv-sol": "^2.1.0",
+    "@summa-tx/bitcoin-spv-sol": "3.0.0",
     "bitcoinjs-lib": "^5.1.7"
   },
   "devDependencies": {
