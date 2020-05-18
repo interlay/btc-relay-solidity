@@ -46,7 +46,7 @@ describe("Retarget", () => {
       next.target,
       next.height,
     );
-    expect(result).to.eq(true);
+    expect(result.valid).to.eq(true);
   });
 
   it("invalid difficulty target", async () => {
@@ -77,7 +77,7 @@ describe("Retarget", () => {
       next.target,
       next.height,
     );
-    expect(result).to.eq(false);
+    expect(result.valid).to.eq(false);
   });
 
   it("invalid period", async () => {

@@ -44,6 +44,6 @@ describe("Proofs", () => {
 
     // checks default stable confirmations
     let result = relay.verifyTx(0, tx.index, tx.id, tx.proof, 0, false);
-    expect(result).to.be.revertedWith(ErrorCode.ERR_BLOCK_NOT_FOUND);
+    expect(result).to.be.revertedWith(ErrorCode.ERR_VERIFY_TX);
   });
 });

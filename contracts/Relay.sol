@@ -12,12 +12,12 @@ contract Relay {
     using BTCUtils for bytes;
     using ValidateSPV for bytes;
 
+    // TODO: optimize storage costs
     struct Header {
         bytes32 merkle; // merkle tree root
         uint256 height; // height of this block header
-        uint256 target;
-        uint256 timestamp;
-
+        uint256 target; // block target
+        uint256 timestamp; // block timestamp
         uint256 chainWork; // accumulated PoW at this height
         uint256 chainId; // identifier of chain fork
     }
@@ -25,6 +25,7 @@ contract Relay {
     // mapping of block hashes to block headers (ALL ever submitted, i.e., incl. forks)
     mapping(bytes32 => Header) public headers;
 
+    // main chain mapping for constant time inclusion check
     mapping(uint256 => bytes32) public chain;
 
     struct Fork {
@@ -42,7 +43,8 @@ contract Relay {
     uint256 public bestHeight;
 
     // incrementing counter to track forks
-    uint256 private chainCounter = 0;
+    // OPTIMIZATION: default to zero value
+    uint256 private chainCounter;
 
     // header of the block at the start of the difficulty period
     uint256 public epochStartTarget;
@@ -54,10 +56,6 @@ contract Relay {
     */
     uint256 public constant DIFFICULTY_ADJUSTMENT_INTERVAL = 2016;
     uint256 public constant DIFF_TARGET = 0xffff0000000000000000000000000000000000000000000000000000;
-    uint256 public constant TARGET_TIMESPAN = 14 * 24 * 60 * 60; // 2 weeks
-    uint256 public constant UNROUNDED_MAX_TARGET = 2**224 - 1;
-    uint256 public constant TARGET_TIMESPAN_DIV_4 = TARGET_TIMESPAN / 4; // store division as constant to save costs
-    uint256 public constant TARGET_TIMESPAN_MUL_4 = TARGET_TIMESPAN * 4; // store multiplication as constant to save costs
 
     uint256 public constant MAIN_CHAIN_ID = 0;
     uint256 public constant CONFIRMATIONS = 6;
@@ -76,16 +74,18 @@ contract Relay {
     event ChainReorg(bytes32 indexed _from, bytes32 indexed _to, uint256 indexed _id);
 
     // EXCEPTION MESSAGES
-    string ERR_INVALID_HEADER_SIZE = "Invalid block header size";
-    string ERR_DUPLICATE_BLOCK = "Block already stored";
-    string ERR_PREVIOUS_BLOCK = "Previous block hash not found";
-    string ERR_LOW_DIFFICULTY = "PoW hash does not meet difficulty target of header";
-    string ERR_DIFF_TARGET_HEADER = "Incorrect difficulty target specified in block header";
-    string ERR_NOT_EXTENSION = "Submission is not an extension of the main chain";
-    string ERR_BLOCK_NOT_FOUND = "Requested block not found in storage";
-    string ERR_CONFIRMS = "Transaction has insufficient confirmations";
-    string ERR_VERIFY_TX = "Incorrect merkle proof";
-    string ERR_INVALID_TXID = "Invalid transaction identifier";
+    // OPTIMIZATION: limit string length to 32 bytes
+    string constant ERR_INVALID_HEADER_SIZE = "Invalid block header size";
+    string constant ERR_DUPLICATE_BLOCK = "Block already stored";
+    string constant ERR_PREVIOUS_BLOCK = "Previous block hash not found";
+    string constant ERR_LOW_DIFFICULTY = "Insufficient difficulty";
+    string constant ERR_DIFF_TARGET_HEADER = "Incorrect difficulty target";
+    string constant ERR_DIFF_PERIOD = "Invalid difficulty period";
+    string constant ERR_NOT_EXTENSION = "Not extension of chain";
+    string constant ERR_BLOCK_NOT_FOUND = "Block not found";
+    string constant ERR_CONFIRMS = "Insufficient confirmations";
+    string constant ERR_VERIFY_TX = "Incorrect merkle proof";
+    string constant ERR_INVALID_TXID = "Invalid tx identifier";
 
     /**
     * @notice Initializes the relay with the provided block.
@@ -140,34 +140,35 @@ contract Relay {
         // Time is always set in block header struct (prevBlockHash and height can be 0 for Genesis block)
         require(headers[hashCurrBlock].merkle == 0, ERR_DUPLICATE_BLOCK);
 
-        Header memory headPrevBlock = headers[hashPrevBlock];
         // Fail if previous block hash not in current state of main chain
-        require(headPrevBlock.merkle != 0, ERR_PREVIOUS_BLOCK);
+        require(headers[hashPrevBlock].merkle != 0, ERR_PREVIOUS_BLOCK);
 
-        // Fails if previous block header is not stored
-        uint256 chainWorkPrevBlock = headPrevBlock.chainWork;
-        uint256 _height = 1 + headPrevBlock.height;
         uint256 target = _header.extractTarget();
 
         // Check the PoW solution matches the target specified in the block header
         require(abi.encodePacked(hashCurrBlock).reverseEndianness().bytesToUint() <= target, ERR_LOW_DIFFICULTY);
-        // Check the specified difficulty target is correct
-        require(isCorrectDifficultyTarget(
-            epochStartTarget,
-            epochStartTime,
-            headPrevBlock.target,
-            headPrevBlock.timestamp,
-            target,
-            _height
-        ), ERR_DIFF_TARGET_HEADER);
 
-        // TODO: update epoch start
-
-        bytes32 merkle = _header.extractMerkleRootLE().toBytes32();
+        uint256 _height = 1 + headers[hashPrevBlock].height;
         uint256 timestamp = _header.extractTimestamp();
 
-        uint256 difficulty = _header.extractDifficulty();
-        uint256 chainWork = chainWorkPrevBlock + difficulty;
+        // Check the specified difficulty target is correct
+        (bool valid, bool update) = isCorrectDifficultyTarget(
+            epochStartTarget,
+            epochStartTime,
+            headers[hashPrevBlock].target,
+            headers[hashPrevBlock].timestamp,
+            target,
+            _height
+        );
+
+        require(valid, ERR_DIFF_TARGET_HEADER);
+        if (update) {
+            epochStartTarget = target;
+            epochStartTime = timestamp;
+        }
+
+        bytes32 merkle = _header.extractMerkleRootLE().toBytes32();
+        uint256 chainWork = headers[hashPrevBlock].chainWork + _header.extractDifficulty();
 
         uint256 chainId = headers[hashPrevBlock].chainId;
         bool isNewFork = forks[chainId].height != headers[hashPrevBlock].height;
@@ -219,8 +220,8 @@ contract Relay {
             } else if (_height >= bestHeight + CONFIRMATIONS) {
                 // reorg fork to main
                 uint256 ancestorId = chainId;
-                uint256 forkHeight = _height;
                 uint256 forkId = incrementChainCounter();
+                uint256 forkHeight = _height - 1;
 
                 while (ancestorId != MAIN_CHAIN_ID) {
                     for (uint i = forks[ancestorId].descendants.length; i > 0; i--) {
@@ -239,6 +240,12 @@ contract Relay {
                 bestBlock = hashCurrBlock;
                 bestHeight = _height;
                 bestScore = chainWork;
+
+                // TODO: add new fork struct for old main
+
+                // extend to current head
+                chain[bestHeight] = bestBlock;
+                headers[bestBlock].chainId = MAIN_CHAIN_ID;
             } else {
                 // extend fork
                 forks[chainId].height = _height;
@@ -268,12 +275,12 @@ contract Relay {
         emit StoreHeader(_digest, _height);
     }
 
-    function incrementChainCounter() private returns (uint256) {
+    function incrementChainCounter() internal returns (uint256) {
         chainCounter = chainCounter.add(1);
         return chainCounter;
     }
 
-    function replaceChainElement(uint256 _height, uint256 _id, bytes32 _digest) private {
+    function replaceChainElement(uint256 _height, uint256 _id, bytes32 _digest) internal {
         // promote header to main chain
         headers[_digest].chainId = MAIN_CHAIN_ID;
         // demote old header to new fork
@@ -287,7 +294,7 @@ contract Relay {
     * @param _height block height to be checked
     * @return true, if block _height is at difficulty adjustment interval, otherwise false
     */
-    function shouldAdjustDifficulty(uint256 _height) private pure returns (bool){
+    function shouldAdjustDifficulty(uint256 _height) internal pure returns (bool){
         return _height % DIFFICULTY_ADJUSTMENT_INTERVAL == 0;
     }
 
@@ -298,15 +305,15 @@ contract Relay {
         uint256 prevEndTime,        // period ending timestamp
         uint256 nextTarget,
         uint256 _height
-    ) public pure returns (bool) {
+    ) public pure returns (bool valid, bool update) {
         if(!shouldAdjustDifficulty(_height)) {
             if(nextTarget != prevEndTarget && prevEndTarget != 0) {
-                return false;
+                return (false, false);
             }
         } else {
             require(
                 BTCUtils.calculateDifficulty(prevStartTarget) == BTCUtils.calculateDifficulty(prevEndTarget),
-                "invalid difficulty period"
+                ERR_DIFF_PERIOD
             );
 
             uint256 expectedTarget = BTCUtils.retargetAlgorithm(
@@ -315,15 +322,9 @@ contract Relay {
                 prevEndTime
             );
 
-            return (nextTarget & expectedTarget) == nextTarget;
+            return ((nextTarget & expectedTarget) == nextTarget, true);
         }
-        return true;
-    }
-
-    function getHeader(bytes32 _digest) private view returns (Header storage) {
-        Header storage head = headers[_digest];
-        require(head.merkle > 0, ERR_BLOCK_NOT_FOUND);
-        return head;
+        return (true, false);
     }
 
     function getHeaderByHash(bytes32 _digest) public view returns (
@@ -332,7 +333,8 @@ contract Relay {
         uint256 target,
         uint256 time
     ) {
-        Header memory head = getHeader(_digest);
+        Header storage head = headers[_digest];
+        require(head.merkle > 0, ERR_BLOCK_NOT_FOUND);
         time = head.timestamp;
         merkle = head.merkle;
         target = head.target;
@@ -360,10 +362,10 @@ contract Relay {
         uint256 _height,
         uint256 _index,
         bytes32 _txid,
-        bytes memory _proof,
+        bytes calldata _proof,
         uint256 _confirmations,
         bool _insecure
-    ) public view returns(bool) {
+    ) external view returns(bool) {
         require(_txid != 0, ERR_INVALID_TXID);
 
         if (_insecure) {
@@ -378,8 +380,7 @@ contract Relay {
             );
         }
 
-        bytes32 _digest = getHashAtHeight(_height);
-        bytes32 _root = getHeader(_digest).merkle;
+        bytes32 _root = headers[chain[_height]].merkle;
         require(
             ValidateSPV.prove(
                 _txid,

@@ -2,7 +2,7 @@
   "solc": {
     "version": "0.5.15",
     "optimizer": {
-      "enabled": false,
+      "enabled": true,
       "runs": 200
     }
   },

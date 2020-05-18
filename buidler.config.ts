@@ -12,7 +12,8 @@ const ETHERSCAN_API_KEY = "";
 const config: BuidlerConfig = {
   defaultNetwork: "buidlerevm",
   solc: {
-    version: "0.5.15"
+    version: "0.5.15",
+    optimizer: { enabled: true, runs: 200 }
   },
   networks: {
     rinkeby: {

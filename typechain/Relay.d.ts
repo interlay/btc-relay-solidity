@@ -22,14 +22,6 @@ interface RelayInterface extends Interface {
 
     MAIN_CHAIN_ID: TypedFunctionDescription<{ encode([]: []): string }>;
 
-    TARGET_TIMESPAN: TypedFunctionDescription<{ encode([]: []): string }>;
-
-    TARGET_TIMESPAN_DIV_4: TypedFunctionDescription<{ encode([]: []): string }>;
-
-    TARGET_TIMESPAN_MUL_4: TypedFunctionDescription<{ encode([]: []): string }>;
-
-    UNROUNDED_MAX_TARGET: TypedFunctionDescription<{ encode([]: []): string }>;
-
     bestBlock: TypedFunctionDescription<{ encode([]: []): string }>;
 
     bestHeight: TypedFunctionDescription<{ encode([]: []): string }>;
@@ -128,14 +120,6 @@ export class Relay extends Contract {
 
     MAIN_CHAIN_ID(): Promise<BigNumber>;
 
-    TARGET_TIMESPAN(): Promise<BigNumber>;
-
-    TARGET_TIMESPAN_DIV_4(): Promise<BigNumber>;
-
-    TARGET_TIMESPAN_MUL_4(): Promise<BigNumber>;
-
-    UNROUNDED_MAX_TARGET(): Promise<BigNumber>;
-
     bestBlock(): Promise<string>;
 
     bestHeight(): Promise<BigNumber>;
@@ -196,7 +180,12 @@ export class Relay extends Contract {
       prevEndTime: BigNumberish,
       nextTarget: BigNumberish,
       _height: BigNumberish
-    ): Promise<boolean>;
+    ): Promise<{
+      valid: boolean;
+      update: boolean;
+      0: boolean;
+      1: boolean;
+    }>;
 
     submitBlockHeader(
       _header: Arrayish,
@@ -220,14 +209,6 @@ export class Relay extends Contract {
   DIFF_TARGET(): Promise<BigNumber>;
 
   MAIN_CHAIN_ID(): Promise<BigNumber>;
-
-  TARGET_TIMESPAN(): Promise<BigNumber>;
-
-  TARGET_TIMESPAN_DIV_4(): Promise<BigNumber>;
-
-  TARGET_TIMESPAN_MUL_4(): Promise<BigNumber>;
-
-  UNROUNDED_MAX_TARGET(): Promise<BigNumber>;
 
   bestBlock(): Promise<string>;
 
@@ -289,7 +270,12 @@ export class Relay extends Contract {
     prevEndTime: BigNumberish,
     nextTarget: BigNumberish,
     _height: BigNumberish
-  ): Promise<boolean>;
+  ): Promise<{
+    valid: boolean;
+    update: boolean;
+    0: boolean;
+    1: boolean;
+  }>;
 
   submitBlockHeader(
     _header: Arrayish,
@@ -326,14 +312,6 @@ export class Relay extends Contract {
     DIFF_TARGET(): Promise<BigNumber>;
 
     MAIN_CHAIN_ID(): Promise<BigNumber>;
-
-    TARGET_TIMESPAN(): Promise<BigNumber>;
-
-    TARGET_TIMESPAN_DIV_4(): Promise<BigNumber>;
-
-    TARGET_TIMESPAN_MUL_4(): Promise<BigNumber>;
-
-    UNROUNDED_MAX_TARGET(): Promise<BigNumber>;
 
     bestBlock(): Promise<BigNumber>;
 
