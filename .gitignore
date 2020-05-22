@@ -1,7 +1,3 @@
-
-# Created by https://www.gitignore.io/api/solidity,soliditytruffle
-# Edit at https://www.gitignore.io/?templates=solidity,soliditytruffle
-
 ### Solidity ###
 # Logs
 logs
@@ -127,9 +123,12 @@ blockchain/geth/**
 blockchain/keystore/**
 blockchain/history
 
-#truffle
+# truffle
 .tern-port
 yarn.lock
 package-lock.json
 
-# End of https://www.gitignore.io/api/solidity,soliditytruffle
+# buidler
+artifacts
+cache
+typechain
