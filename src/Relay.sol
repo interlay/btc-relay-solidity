@@ -262,7 +262,7 @@ contract Relay {
         uint256 _timestamp,
         uint256 _chainId,
         uint256 _chainWork
-    ) private {
+    ) internal {
         chain[_height] = _digest;
         headers[_digest] = Header({
             merkle: _merkle,

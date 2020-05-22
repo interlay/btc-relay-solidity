@@ -1,40 +1,34 @@
 import { BuidlerConfig, usePlugin } from "@nomiclabs/buidler/config";
 
+usePlugin("@nomiclabs/buidler-ganache");
 usePlugin("@nomiclabs/buidler-waffle");
-usePlugin("@nomiclabs/buidler-etherscan");
 usePlugin("buidler-typechain");
-usePlugin("solidity-coverage");
 
-const INFURA_API_KEY = "";
-const RINKEBY_PRIVATE_KEY = "";
-const ETHERSCAN_API_KEY = "";
-
-const config: BuidlerConfig = {
+const config /*: BuidlerConfig*/ = {
   defaultNetwork: "buidlerevm",
   solc: {
     version: "0.5.15",
     optimizer: { enabled: true, runs: 200 }
   },
+	paths: {
+		sources: './src',
+		tests: './test',
+	},
+	typechain: {
+    outDir: 'typechain',
+    target: 'ethers'
+  },
   networks: {
-    rinkeby: {
-      url: `https://rinkeby.infura.io/v3/${INFURA_API_KEY}`,
-      accounts: [RINKEBY_PRIVATE_KEY]
-    },
-    coverage: {
-      url: 'http://127.0.0.1:8555' // Coverage launches its own ganache-cli client
-    }
+      buidlerevm : {},
+      ganache: {
+        url: 'http://127.0.0.1:8545',
+        // fork: 'https://ropsten.infura.io/v3/${ INFURA_ID }',
+        mnemonic: 'lion album emotion suffer october belt uphold mind chronic stool february flag',
+        network_id: 3,
+        timeout: 0,
+        logger: console,
+      },
   },
-  etherscan: {
-    // The url for the Etherscan API you want to use.
-    url: "https://api-rinkeby.etherscan.io/api",
-    // Your API key for Etherscan
-    // Obtain one at https://etherscan.io/
-    apiKey: ETHERSCAN_API_KEY
-  },
-  typechain: {
-    outDir: "typechain",
-    target: "ethers"
-  }
 };
 
 export default config;
