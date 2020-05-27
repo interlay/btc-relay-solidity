@@ -1,7 +1,7 @@
 {
-  "name": "btcrelay-sol",
-  "version": "1.0.0",
-  "description": "BTCRelay implementation in Solidity",
+  "name": "@interlay/btc-relay-sol",
+  "version": "0.1.0",
+  "description": "BTC Relay in Solidity",
   "dependencies": {
     "@summa-tx/bitcoin-spv-sol": "3.0.0",
     "bitcoinjs-lib": "^5.1.7"
@@ -37,12 +37,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/crossclaim/btcrelay-sol.git"
+    "url": "git+https://gitlab.com/interlay/btc-relay-sol.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/crossclaim/btcrelay-sol/issues"
+    "url": "https://gitlab.com/interlay/btc-relay-sol/issues"
   },
-  "homepage": "https://github.com/crossclaim/btcrelay-sol#readme"
+  "homepage": "https://gitlab.com/interlay/btc-relay-sol#readme"
 }
