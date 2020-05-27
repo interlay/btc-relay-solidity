@@ -9,6 +9,11 @@ import { ErrorCode } from './constants';
 chai.use(solidity);
 const { expect } = chai;
 
+async function getBestBlockHeight(relay: Relay) {
+  const {digest, score, height} = await relay.getBestBlock();
+  return height;
+}
+
 describe("Proofs", () => {
   let signers: Signer[];
   let relay: Relay;
@@ -27,7 +32,7 @@ describe("Proofs", () => {
 
   it("should fail with insufficient confirmations", async () => {
     relay = await deployContract(<Wallet>signers[0], RelayArtifact, [genesisHeader, 5]) as Relay;
-    expect(await relay.bestHeight()).to.eq(5);
+    expect(await getBestBlockHeight(relay)).to.eq(5);
 
     // checks default stable confirmations
     let result = relay.verifyTx(0, tx.index, tx.id, tx.proof, 0, false);
@@ -40,7 +45,7 @@ describe("Proofs", () => {
 
   it("should fail with block not found", async () => {
     relay = await deployContract(<Wallet>signers[0], RelayArtifact, [genesisHeader, 100]) as Relay;
-    expect(await relay.bestHeight()).to.eq(100);
+    expect(await getBestBlockHeight(relay)).to.eq(100);
 
     // checks default stable confirmations
     let result = relay.verifyTx(0, tx.index, tx.id, tx.proof, 0, false);

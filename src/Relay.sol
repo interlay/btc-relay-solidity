@@ -4,9 +4,10 @@ import {SafeMath} from "@summa-tx/bitcoin-spv-sol/contracts/SafeMath.sol";
 import {BytesLib} from "@summa-tx/bitcoin-spv-sol/contracts/BytesLib.sol";
 import {BTCUtils} from "@summa-tx/bitcoin-spv-sol/contracts/BTCUtils.sol";
 import {ValidateSPV} from "@summa-tx/bitcoin-spv-sol/contracts/ValidateSPV.sol";
+import {IRelay} from "./IRelay.sol";
 
 /// @title BTC Relay
-contract Relay {
+contract Relay is IRelay {
     using SafeMath for uint256;
     using BytesLib for bytes;
     using BTCUtils for bytes;
@@ -23,10 +24,10 @@ contract Relay {
     }
 
     // mapping of block hashes to block headers (ALL ever submitted, i.e., incl. forks)
-    mapping(bytes32 => Header) public headers;
+    mapping(bytes32 => Header) public _headers;
 
     // main chain mapping for constant time inclusion check
-    mapping(uint256 => bytes32) public chain;
+    mapping(uint256 => bytes32) public _chain;
 
     struct Fork {
         uint256 height; // best height of fork
@@ -35,20 +36,20 @@ contract Relay {
     }
 
     // mapping of ids to forks
-    mapping(uint256 => Fork) public forks;
+    mapping(uint256 => Fork) public _forks;
 
     // block with the most accumulated work, i.e., blockchain tip
-    bytes32 public bestBlock;
-    uint256 public bestScore;
-    uint256 public bestHeight;
+    bytes32 internal _bestBlock;
+    uint256 internal _bestScore;
+    uint256 internal _bestHeight;
 
     // incrementing counter to track forks
     // OPTIMIZATION: default to zero value
-    uint256 private chainCounter;
+    uint256 private _chainCounter;
 
     // header of the block at the start of the difficulty period
-    uint256 public epochStartTarget;
-    uint256 public epochStartTime;
+    uint256 public _epochStartTarget;
+    uint256 public _epochStartTime;
 
     // CONSTANTS
     /*
@@ -65,13 +66,13 @@ contract Relay {
     * @param _digest block header hash of block header submitted for storage
     * @param _height height of the stored block
     */
-    event StoreHeader(bytes32 indexed _digest, uint256 indexed _height);
+    event StoreHeader(bytes32 indexed digest, uint256 indexed height);
     /*
     * @param _from previous best block hash
     * @param _to new best block hash
     * @param _id identifier of the fork triggering the reorg
     */
-    event ChainReorg(bytes32 indexed _from, bytes32 indexed _to, uint256 indexed _id);
+    event ChainReorg(bytes32 indexed from, bytes32 indexed to, uint256 indexed id);
 
     // EXCEPTION MESSAGES
     // OPTIMIZATION: limit string length to 32 bytes
@@ -89,35 +90,35 @@ contract Relay {
 
     /**
     * @notice Initializes the relay with the provided block.
-    * @param _header - genesis block header
-    * @param _height - genesis block height
+    * @param header - genesis block header
+    * @param height - genesis block height
     */
     constructor(
-        bytes memory _header,
-        uint256 _height
+        bytes memory header,
+        uint256 height
     ) public {
-        require(_header.length == 80, ERR_INVALID_HEADER_SIZE);
-        bytes32 digest = _header.hash256();
-        bytes32 merkle = _header.extractMerkleRootLE().toBytes32();
-        uint256 target = _header.extractTarget();
-        uint256 timestamp = _header.extractTimestamp();
+        require(header.length == 80, ERR_INVALID_HEADER_SIZE);
+        bytes32 digest = header.hash256();
+        bytes32 merkle = header.extractMerkleRootLE().toBytes32();
+        uint256 target = header.extractTarget();
+        uint256 timestamp = header.extractTimestamp();
         uint256 chainId = MAIN_CHAIN_ID;
-        uint256 difficulty = _header.extractDifficulty();
+        uint256 difficulty = header.extractDifficulty();
 
-        bestBlock = digest;
-        bestScore = difficulty;
-        bestHeight = _height;
+        _bestBlock = digest;
+        _bestScore = difficulty;
+        _bestHeight = height;
 
-        forks[chainId].height = _height;
-        chain[_height] = digest;
+        _forks[chainId].height = height;
+        _chain[height] = digest;
 
-        epochStartTarget = target;
-        epochStartTime = timestamp;
+        _epochStartTarget = target;
+        _epochStartTime = timestamp;
 
-        storeBlockHeader(
+        _storeBlockHeader(
             digest,
             merkle,
-            _height,
+            height,
             target,
             timestamp,
             chainId,
@@ -127,79 +128,79 @@ contract Relay {
 
     /**
     * @notice Parses, validates and stores Bitcoin block header1 to mapping
-    * @param _header Raw Bitcoin block header bytes (80 bytes)
+    * @param header Raw Bitcoin block header bytes (80 bytes)
     * @return bytes32 Bitcoin-like double sha256 hash of submitted block
     */
-    function submitBlockHeader(bytes memory _header) public returns (bytes32) {
-        require(_header.length == 80, ERR_INVALID_HEADER_SIZE);
+    function submitBlockHeader(bytes calldata header) external returns (bytes32) {
+        require(header.length == 80, ERR_INVALID_HEADER_SIZE);
 
-        bytes32 hashPrevBlock = _header.extractPrevBlockLE().toBytes32();
-        bytes32 hashCurrBlock = _header.hash256();
+        bytes32 hashPrevBlock = header.extractPrevBlockLE().toBytes32();
+        bytes32 hashCurrBlock = header.hash256();
 
         // Fail if block already exists
         // Time is always set in block header struct (prevBlockHash and height can be 0 for Genesis block)
-        require(headers[hashCurrBlock].merkle == 0, ERR_DUPLICATE_BLOCK);
+        require(_headers[hashCurrBlock].merkle == 0, ERR_DUPLICATE_BLOCK);
 
         // Fail if previous block hash not in current state of main chain
-        require(headers[hashPrevBlock].merkle != 0, ERR_PREVIOUS_BLOCK);
+        require(_headers[hashPrevBlock].merkle != 0, ERR_PREVIOUS_BLOCK);
 
-        uint256 target = _header.extractTarget();
+        uint256 target = header.extractTarget();
 
         // Check the PoW solution matches the target specified in the block header
         require(abi.encodePacked(hashCurrBlock).reverseEndianness().bytesToUint() <= target, ERR_LOW_DIFFICULTY);
 
-        uint256 _height = 1 + headers[hashPrevBlock].height;
-        uint256 timestamp = _header.extractTimestamp();
+        uint256 height = 1 + _headers[hashPrevBlock].height;
+        uint256 timestamp = header.extractTimestamp();
 
         // Check the specified difficulty target is correct
         (bool valid, bool update) = isCorrectDifficultyTarget(
-            epochStartTarget,
-            epochStartTime,
-            headers[hashPrevBlock].target,
-            headers[hashPrevBlock].timestamp,
+            _epochStartTarget,
+            _epochStartTime,
+            _headers[hashPrevBlock].target,
+            _headers[hashPrevBlock].timestamp,
             target,
-            _height
+            height
         );
 
         require(valid, ERR_DIFF_TARGET_HEADER);
         if (update) {
-            epochStartTarget = target;
-            epochStartTime = timestamp;
+            _epochStartTarget = target;
+            _epochStartTime = timestamp;
         }
 
-        bytes32 merkle = _header.extractMerkleRootLE().toBytes32();
-        uint256 chainWork = headers[hashPrevBlock].chainWork + _header.extractDifficulty();
+        bytes32 merkle = header.extractMerkleRootLE().toBytes32();
+        uint256 chainWork = _headers[hashPrevBlock].chainWork + header.extractDifficulty();
 
-        uint256 chainId = headers[hashPrevBlock].chainId;
-        bool isNewFork = forks[chainId].height != headers[hashPrevBlock].height;
+        uint256 chainId = _headers[hashPrevBlock].chainId;
+        bool isNewFork = _forks[chainId].height != _headers[hashPrevBlock].height;
 
         if (isNewFork) {
-            chainId = incrementChainCounter();
+            chainId = _incrementChainCounter();
 
-            bytes32[] memory _descendants = new bytes32[](1);
-            _descendants[0] = hashCurrBlock;
+            bytes32[] memory descendants = new bytes32[](1);
+            descendants[0] = hashCurrBlock;
 
             // Initialise fork
-            forks[chainId] = Fork({
-                height: _height,
+            _forks[chainId] = Fork({
+                height: height,
                 ancestor: hashPrevBlock,
-                descendants: _descendants
+                descendants: descendants
             });
 
-            storeBlockHeader(
+            _storeBlockHeader(
                 hashCurrBlock,
                 merkle,
-                _height,
+                height,
                 target,
                 timestamp,
                 chainId,
                 chainWork
             );
         } else {
-            storeBlockHeader(
+            _storeBlockHeader(
                 hashCurrBlock,
                 merkle,
-                _height,
+                height,
                 target,
                 timestamp,
                 chainId,
@@ -208,85 +209,85 @@ contract Relay {
 
             if (chainId == MAIN_CHAIN_ID) {
                 // check that the submitted block is extending the main chain
-                require(chainWork > bestScore, ERR_NOT_EXTENSION);
+                require(chainWork > _bestScore, ERR_NOT_EXTENSION);
 
-                bestBlock = hashCurrBlock;
-                bestHeight = _height;
-                bestScore = chainWork;
+                _bestBlock = hashCurrBlock;
+                _bestHeight = height;
+                _bestScore = chainWork;
 
                 // extend height of main chain
-                forks[chainId].height = _height;
-                chain[_height] = hashCurrBlock;
-            } else if (_height >= bestHeight + CONFIRMATIONS) {
+                _forks[chainId].height = height;
+                _chain[height] = hashCurrBlock;
+            } else if (height >= _bestHeight + CONFIRMATIONS) {
                 // reorg fork to main
                 uint256 ancestorId = chainId;
-                uint256 forkId = incrementChainCounter();
-                uint256 forkHeight = _height - 1;
+                uint256 forkId = _incrementChainCounter();
+                uint256 forkHeight = height - 1;
 
                 while (ancestorId != MAIN_CHAIN_ID) {
-                    for (uint i = forks[ancestorId].descendants.length; i > 0; i--) {
+                    for (uint i = _forks[ancestorId].descendants.length; i > 0; i--) {
                         // get next descendant in fork
-                        bytes32 _descendant = forks[ancestorId].descendants[i-1];
-                        replaceChainElement(forkHeight, forkId, _descendant);
+                        bytes32 descendant = _forks[ancestorId].descendants[i-1];
+                        _replaceChainElement(forkHeight, forkId, descendant);
                         forkHeight--;
                     }
 
-                    bytes32 ancestor = forks[ancestorId].ancestor;
-                    ancestorId = headers[ancestor].chainId;
+                    bytes32 ancestor = _forks[ancestorId].ancestor;
+                    ancestorId = _headers[ancestor].chainId;
                 }
 
-                emit ChainReorg(bestBlock, hashCurrBlock, chainId);
+                emit ChainReorg(_bestBlock, hashCurrBlock, chainId);
 
-                bestBlock = hashCurrBlock;
-                bestHeight = _height;
-                bestScore = chainWork;
+                _bestBlock = hashCurrBlock;
+                _bestHeight = height;
+                _bestScore = chainWork;
 
                 // TODO: add new fork struct for old main
 
                 // extend to current head
-                chain[bestHeight] = bestBlock;
-                headers[bestBlock].chainId = MAIN_CHAIN_ID;
+                _chain[_bestHeight] = _bestBlock;
+                _headers[_bestBlock].chainId = MAIN_CHAIN_ID;
             } else {
                 // extend fork
-                forks[chainId].height = _height;
-                forks[chainId].descendants.push(hashCurrBlock);
+                _forks[chainId].height = height;
+                _forks[chainId].descendants.push(hashCurrBlock);
             }
         }
     }
 
-    function storeBlockHeader(
-        bytes32 _digest,
-        bytes32 _merkle,
-        uint256 _height,
-        uint256 _target,
-        uint256 _timestamp,
-        uint256 _chainId,
-        uint256 _chainWork
+    function _storeBlockHeader(
+        bytes32 digest,
+        bytes32 merkle,
+        uint256 height,
+        uint256 target,
+        uint256 timestamp,
+        uint256 chainId,
+        uint256 chainWork
     ) internal {
-        chain[_height] = _digest;
-        headers[_digest] = Header({
-            merkle: _merkle,
-            height: _height,
-            target: _target,
-            timestamp: _timestamp,
-            chainId: _chainId,
-            chainWork: _chainWork
+        _chain[height] = digest;
+        _headers[digest] = Header({
+            merkle: merkle,
+            height: height,
+            target: target,
+            timestamp: timestamp,
+            chainId: chainId,
+            chainWork: chainWork
         });
-        emit StoreHeader(_digest, _height);
+        emit StoreHeader(digest, height);
     }
 
-    function incrementChainCounter() internal returns (uint256) {
-        chainCounter = chainCounter.add(1);
-        return chainCounter;
+    function _incrementChainCounter() internal returns (uint256) {
+        _chainCounter = _chainCounter.add(1);
+        return _chainCounter;
     }
 
-    function replaceChainElement(uint256 _height, uint256 _id, bytes32 _digest) internal {
+    function _replaceChainElement(uint256 height, uint256 id, bytes32 digest) internal {
         // promote header to main chain
-        headers[_digest].chainId = MAIN_CHAIN_ID;
+        _headers[digest].chainId = MAIN_CHAIN_ID;
         // demote old header to new fork
-        headers[chain[_height]].chainId = _id;
+        _headers[_chain[height]].chainId = id;
         // swap header at height
-        chain[_height] = _digest;
+        _chain[height] = digest;
     }
 
     /*
@@ -294,8 +295,8 @@ contract Relay {
     * @param _height block height to be checked
     * @return true, if block _height is at difficulty adjustment interval, otherwise false
     */
-    function shouldAdjustDifficulty(uint256 _height) internal pure returns (bool){
-        return _height % DIFFICULTY_ADJUSTMENT_INTERVAL == 0;
+    function _shouldAdjustDifficulty(uint256 height) internal pure returns (bool){
+        return height % DIFFICULTY_ADJUSTMENT_INTERVAL == 0;
     }
 
     function isCorrectDifficultyTarget(
@@ -304,9 +305,9 @@ contract Relay {
         uint256 prevEndTarget,      // period ending target
         uint256 prevEndTime,        // period ending timestamp
         uint256 nextTarget,
-        uint256 _height
+        uint256 height
     ) public pure returns (bool valid, bool update) {
-        if(!shouldAdjustDifficulty(_height)) {
+        if(!_shouldAdjustDifficulty(height)) {
             if(nextTarget != prevEndTarget && prevEndTarget != 0) {
                 return (false, false);
             }
@@ -327,13 +328,13 @@ contract Relay {
         return (true, false);
     }
 
-    function getHeaderByHash(bytes32 _digest) public view returns (
+    function getHeaderByHash(bytes32 _digest) external view returns (
         uint256 height,
         bytes32 merkle,
         uint256 target,
         uint256 time
     ) {
-        Header storage head = headers[_digest];
+        Header storage head = _headers[_digest];
         require(head.merkle > 0, ERR_BLOCK_NOT_FOUND);
         time = head.timestamp;
         merkle = head.merkle;
@@ -342,51 +343,55 @@ contract Relay {
         return(height, merkle, target, time);
     }
 
-    function getHashAtHeight(uint256 _height) public view returns (bytes32) {
-        bytes32 _digest = chain[_height];
-        require(_digest > 0, ERR_BLOCK_NOT_FOUND);
-        return _digest;
+    function getHashAtHeight(uint256 height) external view returns (bytes32) {
+        bytes32 digest = _chain[height];
+        require(digest > 0, ERR_BLOCK_NOT_FOUND);
+        return digest;
+    }
+
+    function getBestBlock() external view returns (bytes32 digest, uint256 score, uint256 height) {
+        return (_bestBlock, _bestScore, _bestHeight);
     }
 
     /**
     * @notice verifies that a transaction is included in a block
-    * @param _height height of block that included transaction
-    * @param _index index of transaction in the block's tx merkle tree
-    * @param _txid transaction identifier
-    * @param _proof merkle proof
-    * @param _confirmations required confirmations (insecure)
-    * @param _insecure check custom inclusion confirmations
+    * @param height height of block that included transaction
+    * @param index index of transaction in the block's tx merkle tree
+    * @param txid transaction identifier
+    * @param proof merkle proof
+    * @param confirmations required confirmations (insecure)
+    * @param insecure check custom inclusion confirmations
     * @return true if _txid is included, false otherwise
     */
     function verifyTx(
-        uint256 _height,
-        uint256 _index,
-        bytes32 _txid,
-        bytes calldata _proof,
-        uint256 _confirmations,
-        bool _insecure
-    ) external view returns(bool) {
-        require(_txid != 0, ERR_INVALID_TXID);
+        uint256 height,
+        uint256 index,
+        bytes32 txid,
+        bytes calldata proof,
+        uint256 confirmations,
+        bool insecure
+    ) external view returns (bool) {
+        require(txid != 0, ERR_INVALID_TXID);
 
-        if (_insecure) {
+        if (insecure) {
             require(
-                _height + _confirmations <= bestHeight,
+                height + confirmations <= _bestHeight,
                 ERR_CONFIRMS
             );
         } else {
             require(
-                _height + CONFIRMATIONS <= bestHeight,
+                height + CONFIRMATIONS <= _bestHeight,
                 ERR_CONFIRMS
             );
         }
 
-        bytes32 _root = headers[chain[_height]].merkle;
+        bytes32 root = _headers[_chain[height]].merkle;
         require(
             ValidateSPV.prove(
-                _txid,
-                _root,
-                _proof,
-                _index
+                txid,
+                root,
+                proof,
+                index
             ),
             ERR_VERIFY_TX
         );

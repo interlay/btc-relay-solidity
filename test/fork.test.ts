@@ -8,6 +8,11 @@ import { Relay } from "../typechain/Relay"
 chai.use(solidity);
 const { expect } = chai;
 
+async function getBestBlockDigest(relay: Relay) {
+  const {digest, score, height} = await relay.getBestBlock();
+  return digest;
+}
+
 describe("Forking", () => {
   let signers: Signer[];
   let relay: Relay;
@@ -33,28 +38,28 @@ describe("Forking", () => {
 
     // submit orphan
     await relay.submitBlockHeader("0x0000802020ffe4f7a005faa83610adf7e7a52ff5700c222b9b5f0500000000000000000058c8af6bf8e8e00c3d6ff512b2133533ebdcde164de306e6b65e53157fc22b53e7d3615c886f2e17ed205930"); // 562630
-    expect(await relay.bestBlock()).to.eq(oldBestBlock);
+    expect(await getBestBlockDigest(relay)).to.eq(oldBestBlock);
     
     // submit fork
     await relay.submitBlockHeader("0x0000002020ffe4f7a005faa83610adf7e7a52ff5700c222b9b5f050000000000000000009d1479517fda612a10a279b2339952bbdba8fe47c8fec644921d146ec79482ecebd3615c886f2e179234c38e"); // 562630
-    expect(await relay.bestBlock()).to.eq(oldBestBlock);
+    expect(await getBestBlockDigest(relay)).to.eq(oldBestBlock);
 
     // extend fork
     await relay.submitBlockHeader("0x0000002051214b0c42383a1ea7bf28f20062f81d7b72497cb1030a00000000000000000000af444756eb5313dae6cb8dc7b4e00ae7d79cfa67a85b4b486a9583896ab3314bd8615c886f2e17f152bc1f"); // 562631
-    expect(await relay.bestBlock()).to.eq(oldBestBlock);
+    expect(await getBestBlockDigest(relay)).to.eq(oldBestBlock);
     await relay.submitBlockHeader("0x00e00020bf01515ce1f4f971b9805205373093c200b2bf92d56408000000000000000000b2c2fcb555d6e2d677bb9919cc2d9660c81879225d15f53f679e3fdbfad129d032db615c886f2e17155f22df"); // 562632
-    expect(await relay.bestBlock()).to.eq(oldBestBlock);
+    expect(await getBestBlockDigest(relay)).to.eq(oldBestBlock);
     await relay.submitBlockHeader("0x00000020a4c292016c1585e6f81986f7e216c79d28b15b1d513a100000000000000000004e33f75c5f63371d4a05e7ab93afb7c1caa22d2f9d4fce61e194ab8ffe741f35c0de615c886f2e17032ddf4b"); // 562633
-    expect(await relay.bestBlock()).to.eq(oldBestBlock);
+    expect(await getBestBlockDigest(relay)).to.eq(oldBestBlock);
     await relay.submitBlockHeader("0x00000020577d11b45f90733748343b5add65dbe88216fa3027cc20000000000000000000ef200d52b09ae1902d62476f09405e21fa81cd7972ccfeaf37b47b00ef4e2180cdde615c886f2e171f2b5f80"); // 562634
-    expect(await relay.bestBlock()).to.eq(oldBestBlock);
+    expect(await getBestBlockDigest(relay)).to.eq(oldBestBlock);
     await relay.submitBlockHeader("0x00000020f5f2d6840112ff9281bd88f445f135dfb41a64cebeb725000000000000000000a91738fc7b8628e70906164624f80ce54bafe26fe0ef8678f569b0b64e83589cb3e0615c886f2e17c624e58c"); // 562635
-    expect(await relay.bestBlock()).to.eq(oldBestBlock);
+    expect(await getBestBlockDigest(relay)).to.eq(oldBestBlock);
     
     // overtake stable confirmations
     let newBestBlock = "0x0ed18ffcb751e45471dddab23d34538869d3b2cdd48428000000000000000000";
     await relay.submitBlockHeader("0x00e00020f98794c5b71e25f07eb2a31ab31b2e2487e0859abec000000000000000000000c29b14f0fe90ac2173197665d460df45c37ccf0c873276f59d095cbed4bcc7c2fae4615c886f2e178a505d9d"); // 562636
-    expect(await relay.bestBlock()).to.eq(newBestBlock);
+    expect(await getBestBlockDigest(relay)).to.eq(newBestBlock);
 
     let filter = relay.filters.ChainReorg(oldBestBlock, newBestBlock, 1);
     await new Promise((resolve, reject) => {

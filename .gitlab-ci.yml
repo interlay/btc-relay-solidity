@@ -1,0 +1,10 @@
+stages:
+  - test
+
+contracts:
+  stage: test
+  image: node:13
+  script:
+  - npm install
+  - npm run build
+  - npm run test

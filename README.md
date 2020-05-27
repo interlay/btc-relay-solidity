@@ -36,6 +36,12 @@ Run the tests:
 npm test
 ```
 
+## Deployments
+
+### Ropsten
+
+0x9847E88401a27a9165543ecAE650739cE30732CD
+
 ### TxChain Performance Tests
 The `scripts` folder contains test scripts for evaluating the performance/cost improvement of the TxChain transaction aggregation.
 
