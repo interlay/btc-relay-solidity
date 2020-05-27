@@ -61,19 +61,6 @@ contract Relay is IRelay {
     uint256 public constant MAIN_CHAIN_ID = 0;
     uint256 public constant CONFIRMATIONS = 6;
 
-    // EVENTS
-    /*
-    * @param _digest block header hash of block header submitted for storage
-    * @param _height height of the stored block
-    */
-    event StoreHeader(bytes32 indexed digest, uint256 indexed height);
-    /*
-    * @param _from previous best block hash
-    * @param _to new best block hash
-    * @param _id identifier of the fork triggering the reorg
-    */
-    event ChainReorg(bytes32 indexed from, bytes32 indexed to, uint256 indexed id);
-
     // EXCEPTION MESSAGES
     // OPTIMIZATION: limit string length to 32 bytes
     string constant ERR_INVALID_HEADER_SIZE = "Invalid block header size";
@@ -126,11 +113,6 @@ contract Relay is IRelay {
         );
     }
 
-    /**
-    * @notice Parses, validates and stores Bitcoin block header1 to mapping
-    * @param header Raw Bitcoin block header bytes (80 bytes)
-    * @return bytes32 Bitcoin-like double sha256 hash of submitted block
-    */
     function submitBlockHeader(bytes calldata header) external returns (bytes32) {
         require(header.length == 80, ERR_INVALID_HEADER_SIZE);
 
@@ -353,16 +335,6 @@ contract Relay is IRelay {
         return (_bestBlock, _bestScore, _bestHeight);
     }
 
-    /**
-    * @notice verifies that a transaction is included in a block
-    * @param height height of block that included transaction
-    * @param index index of transaction in the block's tx merkle tree
-    * @param txid transaction identifier
-    * @param proof merkle proof
-    * @param confirmations required confirmations (insecure)
-    * @param insecure check custom inclusion confirmations
-    * @return true if _txid is included, false otherwise
-    */
     function verifyTx(
         uint256 height,
         uint256 index,

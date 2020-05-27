@@ -23,11 +23,6 @@ contract TestRelay is Relay {
         uint256 height
     ) public Relay(header, height) {}
 
-    /**
-    * @notice Parses, validates and stores Bitcoin block header1 to mapping
-    * @param header Raw Bitcoin block header bytes (80 bytes)
-    * @return bytes32 Bitcoin-like double sha256 hash of submitted block
-    */
     function submitBlockHeader(bytes calldata header) external returns (bytes32) {
         require(header.length == 80, ERR_INVALID_HEADER_SIZE);
 
