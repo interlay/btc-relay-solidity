@@ -54,16 +54,7 @@ contract TestRelay is Relay {
 
         if (isNewFork) {
             chainId = _incrementChainCounter();
-
-            bytes32[] memory descendants = new bytes32[](1);
-            descendants[0] = hashCurrBlock;
-
-            // Initialise fork
-            _forks[chainId] = Fork({
-                height: height,
-                ancestor: hashPrevBlock,
-                descendants: descendants
-            });
+            _initializeFork(hashCurrBlock, hashPrevBlock, chainId, height);
 
             _storeBlockHeader(
                 hashCurrBlock,
@@ -97,34 +88,7 @@ contract TestRelay is Relay {
                 _forks[chainId].height = height;
                 _chain[height] = hashCurrBlock;
             } else if (height >= _bestHeight + CONFIRMATIONS) {
-                // reorg fork to main
-                uint256 ancestorId = chainId;
-                uint256 forkId = _incrementChainCounter();
-                uint256 forkHeight = height - 1;
-
-                while (ancestorId != MAIN_CHAIN_ID) {
-                    for (uint i = _forks[ancestorId].descendants.length; i > 0; i--) {
-                        // get next descendant in fork
-                        bytes32 descendant = _forks[ancestorId].descendants[i-1];
-                        _replaceChainElement(forkHeight, forkId, descendant);
-                        forkHeight--;
-                    }
-
-                    bytes32 ancestor = _forks[ancestorId].ancestor;
-                    ancestorId = _headers[ancestor].chainId;
-                }
-
-                emit ChainReorg(_bestBlock, hashCurrBlock, chainId);
-
-                _bestBlock = hashCurrBlock;
-                _bestHeight = height;
-                _bestScore = chainWork;
-
-                // TODO: add new fork struct for old main
-
-                // extend to current head
-                _chain[_bestHeight] = _bestBlock;
-                _headers[_bestBlock].chainId = MAIN_CHAIN_ID;
+                _reorgChain(chainId, height, hashCurrBlock, chainWork);
             } else {
                 // extend fork
                 _forks[chainId].height = height;

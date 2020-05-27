@@ -158,16 +158,7 @@ contract Relay is IRelay {
 
         if (isNewFork) {
             chainId = _incrementChainCounter();
-
-            bytes32[] memory descendants = new bytes32[](1);
-            descendants[0] = hashCurrBlock;
-
-            // Initialise fork
-            _forks[chainId] = Fork({
-                height: height,
-                ancestor: hashPrevBlock,
-                descendants: descendants
-            });
+            _initializeFork(hashCurrBlock, hashPrevBlock, chainId, height);
 
             _storeBlockHeader(
                 hashCurrBlock,
@@ -200,39 +191,16 @@ contract Relay is IRelay {
                 // extend height of main chain
                 _forks[chainId].height = height;
                 _chain[height] = hashCurrBlock;
+
             } else if (height >= _bestHeight + CONFIRMATIONS) {
-                // reorg fork to main
-                uint256 ancestorId = chainId;
-                uint256 forkId = _incrementChainCounter();
-                uint256 forkHeight = height - 1;
+                // with sufficient confirmations, reorg
+                _reorgChain(chainId, height, hashCurrBlock, chainWork);
 
-                while (ancestorId != MAIN_CHAIN_ID) {
-                    for (uint i = _forks[ancestorId].descendants.length; i > 0; i--) {
-                        // get next descendant in fork
-                        bytes32 descendant = _forks[ancestorId].descendants[i-1];
-                        _replaceChainElement(forkHeight, forkId, descendant);
-                        forkHeight--;
-                    }
-
-                    bytes32 ancestor = _forks[ancestorId].ancestor;
-                    ancestorId = _headers[ancestor].chainId;
-                }
-
-                emit ChainReorg(_bestBlock, hashCurrBlock, chainId);
-
-                _bestBlock = hashCurrBlock;
-                _bestHeight = height;
-                _bestScore = chainWork;
-
-                // TODO: add new fork struct for old main
-
-                // extend to current head
-                _chain[_bestHeight] = _bestBlock;
-                _headers[_bestBlock].chainId = MAIN_CHAIN_ID;
             } else {
                 // extend fork
                 _forks[chainId].height = height;
                 _forks[chainId].descendants.push(hashCurrBlock);
+
             }
         }
     }
@@ -263,13 +231,53 @@ contract Relay is IRelay {
         return _chainCounter;
     }
 
-    function _replaceChainElement(uint256 height, uint256 id, bytes32 digest) internal {
-        // promote header to main chain
-        _headers[digest].chainId = MAIN_CHAIN_ID;
-        // demote old header to new fork
-        _headers[_chain[height]].chainId = id;
-        // swap header at height
-        _chain[height] = digest;
+    function _initializeFork(bytes32 hashCurrBlock, bytes32 hashPrevBlock, uint chainId, uint height) internal {
+        bytes32[] memory descendants = new bytes32[](1);
+        descendants[0] = hashCurrBlock;
+
+        _forks[chainId] = Fork({
+            height: height,
+            ancestor: hashPrevBlock,
+            descendants: descendants
+        });
+    }
+
+    function _reorgChain(uint chainId, uint height, bytes32 hashCurrBlock, uint chainWork) internal {
+        // reorg fork to main
+        uint256 ancestorId = chainId;
+        uint256 forkId = _incrementChainCounter();
+        uint256 forkHeight = height - 1;
+
+        // TODO: add new fork struct for old main
+
+        while (ancestorId != MAIN_CHAIN_ID) {
+            for (uint i = _forks[ancestorId].descendants.length; i > 0; i--) {
+                // get next descendant in fork
+                bytes32 descendant = _forks[ancestorId].descendants[i-1];
+                // promote header to main chain
+                _headers[descendant].chainId = MAIN_CHAIN_ID;
+                // demote old header to new fork
+                _headers[_chain[height]].chainId = forkId;
+                // swap header at height
+                _chain[height] = descendant;
+                forkHeight--;
+            }
+
+            bytes32 ancestor = _forks[ancestorId].ancestor;
+            ancestorId = _headers[ancestor].chainId;
+        }
+
+        emit ChainReorg(_bestBlock, hashCurrBlock, chainId);
+
+        _bestBlock = hashCurrBlock;
+        _bestHeight = height;
+        _bestScore = chainWork;
+
+        delete _forks[chainId];
+
+        // extend to current head
+        _chain[_bestHeight] = _bestBlock;
+        _headers[_bestBlock].chainId = MAIN_CHAIN_ID;
     }
 
     /*
