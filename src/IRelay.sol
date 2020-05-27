@@ -19,9 +19,11 @@ interface IRelay {
     * @param header Raw Bitcoin block header bytes (80 bytes)
     * @return bytes32 Bitcoin-like double sha256 hash of submitted block
     */
-    function submitBlockHeader(bytes calldata header) external returns (bytes32);
+    function submitBlockHeader(bytes calldata header) external;
 
-    function getHeaderByHash(bytes32 _digest) external view returns (
+    function submitBlockHeaderBatch(bytes calldata headers) external;
+
+    function getHeaderByHash(bytes32 digest) external view returns (
         uint256 height,
         bytes32 merkle,
         uint256 target,

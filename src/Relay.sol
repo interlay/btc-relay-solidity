@@ -64,6 +64,7 @@ contract Relay is IRelay {
     // EXCEPTION MESSAGES
     // OPTIMIZATION: limit string length to 32 bytes
     string constant ERR_INVALID_HEADER_SIZE = "Invalid block header size";
+    string constant ERR_INVALID_HEADER_BATCH = "Invalid block header batch";
     string constant ERR_DUPLICATE_BLOCK = "Block already stored";
     string constant ERR_PREVIOUS_BLOCK = "Previous block hash not found";
     string constant ERR_LOW_DIFFICULTY = "Insufficient difficulty";
@@ -113,7 +114,7 @@ contract Relay is IRelay {
         );
     }
 
-    function submitBlockHeader(bytes calldata header) external returns (bytes32) {
+    function _submitBlockHeader(bytes memory header) internal {
         require(header.length == 80, ERR_INVALID_HEADER_SIZE);
 
         bytes32 hashPrevBlock = header.extractPrevBlockLE().toBytes32();
@@ -202,6 +203,19 @@ contract Relay is IRelay {
                 _forks[chainId].descendants.push(hashCurrBlock);
 
             }
+        }
+    }
+
+    function submitBlockHeader(bytes calldata header) external {
+        _submitBlockHeader(header);
+    }
+
+    function submitBlockHeaderBatch(bytes calldata headers) external {
+        require(headers.length % 80 == 0, ERR_INVALID_HEADER_BATCH);
+
+        for (uint256 i = 0; i < headers.length / 80; i = i.add(1)) {
+            bytes memory header = headers.slice(i.mul(80), 80);
+            _submitBlockHeader(header);
         }
     }
 
@@ -318,13 +332,13 @@ contract Relay is IRelay {
         return (true, false);
     }
 
-    function getHeaderByHash(bytes32 _digest) external view returns (
+    function getHeaderByHash(bytes32 digest) external view returns (
         uint256 height,
         bytes32 merkle,
         uint256 target,
         uint256 time
     ) {
-        Header storage head = _headers[_digest];
+        Header storage head = _headers[digest];
         require(head.merkle > 0, ERR_BLOCK_NOT_FOUND);
         time = head.timestamp;
         merkle = head.merkle;

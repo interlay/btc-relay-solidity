@@ -23,7 +23,7 @@ contract TestRelay is Relay {
         uint256 height
     ) public Relay(header, height) {}
 
-    function submitBlockHeader(bytes calldata header) external returns (bytes32) {
+    function _submitBlockHeader(bytes memory header) internal {
         require(header.length == 80, ERR_INVALID_HEADER_SIZE);
 
         bytes32 hashPrevBlock = header.extractPrevBlockLE().toBytes32();
