@@ -14,6 +14,7 @@ library Script {
     bytes1 constant OP_CHECKSIG = 0xac;
     bytes1 constant OP_CHECKLOCKTIMEVERIFY = 0xb1;
     bytes1 constant OP_DROP = 0x75;
+    bytes1 constant OP_0 = 0x00;
 
     // EXCEPTION MESSAGES
     string constant ERR_INVALID_SIZE = "Invalid size";
@@ -30,6 +31,12 @@ library Script {
         return _script.slice(3, 20);
     }
 
+    function isP2WPKH(bytes memory _script) internal pure returns (bytes1, bytes memory) {
+        require(_script.length == 22, ERR_INVALID_SIZE);
+        bytes1 version = _script[0];
+        require(_script[1] == 0x14, ERR_INVALID_OPCODE); // OP_PUSHDATA
+        return (version, _script.slice(2, 20));
+    }
 
     // 0xa9 (OP_HASH160) - 0x14 (20 bytes hash) - <20 bytes script hash> - 0x87 (OP_EQUAL)
     function isP2SH(bytes memory _script) internal pure returns (bytes memory) {

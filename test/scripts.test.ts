@@ -4,6 +4,7 @@ import chai from "chai";
 import { deployContract, solidity } from "ethereum-waffle";
 import Artifact from "../artifacts/ScriptDelegate.json";
 import { ScriptDelegate } from "../typechain/ScriptDelegate"
+import * as bech32 from 'bech32';
 
 chai.use(solidity);
 const { expect } = chai;
@@ -41,5 +42,14 @@ describe("Scripts", () => {
     let result = await parser.isCLTV("0x049f7b2a5cb17576a914371c20fb2e9899338ce5e99908e64fd30b78931388ac");
     expect(result.time).to.eq(1546288031);
     expect(result.addr).to.eq("0x371c20fb2e9899338ce5e99908e64fd30b789313");
+  });
+
+  it("should accept p2wpkh script (testnet)", async () => {
+    let {version, data} = await parser.isP2WPKH("0x00145587090c3288b46df8cc928c6910a8c1bbea508f");
+
+    let words = bech32.toWords(Buffer.from(data.substr(2), 'hex'));
+    words.unshift(parseInt(version));
+
+    expect(bech32.encode("tb", words)).to.eq("tb1q2krsjrpj3z6xm7xvj2xxjy9gcxa755y0exegh6");    
   });
 });

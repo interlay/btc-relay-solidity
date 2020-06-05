@@ -12,9 +12,14 @@ type Genesis = {
 // };
   
 const testnet: Genesis = {
-    header: '0x00000020135cbbf7f95c610be49a8269119650071d65804b74bb406d329c703600000000b097e85bbb9d6f138366eb181c94f458f9ff1db60a4c11dc9b6fa407327c7161d36eca5effff001d231b3547',
-    height: 1746433,
+    header: '0x0000002052ee0268400be3acb86eb36901b25729a7170f70d7d34adf60cb4e2200000000212a63e6c467ccc5a5dcbcf890fc0167fe5c7b8040a0adf71ea40dccd6d6cdc0ea16d95effff001d98dc7aac',
+    height: 1747713,
 };
+
+// const regtest: Genesis = {
+//   header: '0x0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4adae5494dffff7f2002000000',
+//   height: 0,
+// }
 
 async function main(start: Genesis) {
 	let signers = await ethers.signers();

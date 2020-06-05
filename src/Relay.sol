@@ -380,6 +380,7 @@ contract Relay is IRelay {
         }
 
         bytes32 root = _headers[_chain[height]].merkle;
+        require(root.length > 0, ERR_BLOCK_NOT_FOUND);
         require(
             ValidateSPV.prove(
                 txid,

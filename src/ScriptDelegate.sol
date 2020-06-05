@@ -9,6 +9,10 @@ contract ScriptDelegate {
         return _script.isP2PKH();
     }
 
+    function isP2WPKH(bytes memory _script) public pure returns (bytes1 version, bytes memory data) {
+        return _script.isP2WPKH();
+    }
+
     function isP2SH(bytes memory _script) public pure returns (bytes memory) {
         return _script.isP2SH();
     }

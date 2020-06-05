@@ -5,6 +5,7 @@ import { deployContract, solidity } from "ethereum-waffle";
 import RelayArtifact from "../artifacts/Relay.json";
 import { Relay } from "../typechain/Relay"
 import { ErrorCode } from './constants';
+import endianness from 'endianness';
 
 chai.use(solidity);
 const { expect } = chai;
@@ -18,28 +19,33 @@ describe("Proofs", () => {
   let signers: Signer[];
   let relay: Relay;
 
-  let genesisHeader = "0x000000207254b575ca46a64e2251374c8ae42a626d3960662173caff2b181a86b1900677181d48578ffbf3430a24c93afb630c9f727ec6b03fedb96ac5d2135ae5f7245eaeef965dffff7f2001000000";
+  // 592920
+  let genesisHeader = "0x0000c020c238b601308b7297346ab2ed59942d7d7ecea8d23a1001000000000000000000b61ac92842abc82aa93644b190fc18ad46c6738337e78bc0c69ab21c5d5ee2ddd6376d5d3e211a17d8706a84";
 
   beforeEach(async () => {
     signers = await ethers.signers();
   });
 
   let tx = {
-    id: "0x1e55314039d309fbf6af8242021ddff4376272d39b89b23c648c20841397461d",
-    proof: "0x1d46971384208c643cb2899bd3726237f4df1d024282aff6fb09d3394031551e",
-    index: 0,
-  };
+    version: "0x01000000",
+    vin: "0x0101748906a5c7064550a594c4683ffc6d1ee25292b638c4328bb66403cfceb58a000000006a4730440220364301a77ee7ae34fa71768941a2aad5bd1fa8d3e30d4ce6424d8752e83f2c1b02203c9f8aafced701f59ffb7c151ff2523f3ed1586d29b674efb489e803e9bf93050121029b3008c0fa147fd9db5146e42b27eb0a77389497713d3aad083313d1b1b05ec0ffffffff",
+    vout: "0x0316312f00000000001976a91400cc8d95d6835252e0d95eb03b11691a21a7bac588ac220200000000000017a914e5034b9de4881d62480a2df81032ef0299dcdc32870000000000000000166a146f6d6e69000000000000001f0000000315e17900",
+    locktime: "0x00000000",
+    tx_id: "0x5176f6b03b8bc29f4deafbb7384b673debde6ae712deab93f3b0c91fdcd6d674",
+    index: 26,
+    intermediate_nodes: "0x8d7a6d53ce27f79802631f1aae5f172c43d128b210ab4962d488c81c96136cfb75c95def872e878839bd93b42c04eb44da44c401a2d580ca343c3262e9c0a2819ed4bbfb9ea620280b31433f43b2512a893873b8c8c679f61e1a926c0ec80bcfc6225a15d72fbd1116f78b14663d8518236b02e765bf0a746a6a08840c122a02afa4df3ab6b9197a20f00495a404ee8e07da2b7554e94609e9ee1d5da0fb7857ea0332072568d0d53a9aedf851892580504a7fcabfbdde076242eb7f4e5f218a14d2a3f357d950b4f6a1dcf93f7c19c44d0fc122d00afa297b9503c1a6ad24cf36cb5f2835bcf490371db2e96047813a24176c3d3416f84b7ddfb7d8c915eb0c5ce7de089b5d9e700ecd12e09163f173b70bb4c9af33051b466b1f55abd66f3121216ad0ad9dfa898535e1d5e51dd07bd0a73d584daace7902f20ece4ba4f4f241c80cb31eda88a244a3c68d0f157c1049b4153d7addd6548aca0885acafbf98a1f8345c89914c24729ad095c7a0b9acd20232ccd90dbd359468fcc4eee7b67d"
+  }
 
   it("should fail with insufficient confirmations", async () => {
     relay = await deployContract(<Wallet>signers[0], RelayArtifact, [genesisHeader, 5]) as Relay;
     expect(await getBestBlockHeight(relay)).to.eq(5);
 
     // checks default stable confirmations
-    let result = relay.verifyTx(0, tx.index, tx.id, tx.proof, 0, false);
+    let result = relay.verifyTx(0, tx.index, tx.tx_id, tx.intermediate_nodes, 0, false);
     expect(result).to.be.revertedWith(ErrorCode.ERR_CONFIRMS);
 
     // checks custom period
-    result = relay.verifyTx(0, tx.index, tx.id, tx.proof, 100, true);
+    result = relay.verifyTx(0, tx.index, tx.tx_id, tx.intermediate_nodes, 100, true);
     expect(result).to.be.revertedWith(ErrorCode.ERR_CONFIRMS);
   });
 
@@ -48,7 +54,46 @@ describe("Proofs", () => {
     expect(await getBestBlockHeight(relay)).to.eq(100);
 
     // checks default stable confirmations
-    let result = relay.verifyTx(0, tx.index, tx.id, tx.proof, 0, false);
+    let result = relay.verifyTx(0, tx.index, tx.tx_id, tx.intermediate_nodes, 0, false);
     expect(result).to.be.revertedWith(ErrorCode.ERR_VERIFY_TX);
+  });
+
+  it("should validate inclusion", async () => {
+    relay = await deployContract(<Wallet>signers[0], RelayArtifact, [genesisHeader, 0]) as Relay;
+    expect(await getBestBlockHeight(relay)).to.eq(0);
+
+    // checks default stable confirmations
+    await relay.verifyTx(0, tx.index, tx.tx_id, tx.intermediate_nodes, 0, true);
+  });
+
+  let testnet = {
+    tx_id: "e50f29833077b92270a011594c87d8e2b02f80c4cf010adf4006587877381808",
+    index: 64,
+    intermediate_nodes: [ 
+      "4bcd5ffb40a136e53357f0bc575ccd22f3383d61c7d30b520a98d5bc2bde2f0a",
+      "8b5864ec60f6c05ef25fbe0abf530964e7f06de5869ff0a6442f7f303a09552f",
+      "57a0e382816bf2393cadde9afe8abc5c3cd7224df6cb1b7b7829b3470d1c10c4",
+      "9bdd0449644b5785872b001813d9f5e468e903f756a7ff0cafdd39cdbb207afe",
+      "f9e56e0cbfd8f769dbd4b9dc82441ba82ac70c1254a864d31db391403cfb5b76",
+      "ee1db72e0346d9efbc52ef0cc20664d3174d9bbaa52b579f56797a868492fcb8",
+      "87a266e624908d7fe6c8ec3ba35a34f4e5b3e577e29d5404f6c141646876ac3e",
+    ],
+    header: "0x00000020c29de51a684e5219b6cfe25f6999a31e05b5626a33478a8e6ed4869d000000005125f5cb99ebbfc5d2397d8282bd849aee26f984111230c8c42ee25dbd361e944d20d95effff001d97bebd41",
+    headerHash: "0x000000000ee8388b0c4b935dec68824af4ad284dda2065d3eab526f207b17d8c",
+    height: 1747715,
+  };
+
+  it("should validate inclusion", async () => {
+    relay = await deployContract(<Wallet>signers[0], RelayArtifact, [testnet.header, testnet.height]) as Relay;
+    expect(await getBestBlockHeight(relay)).to.eq(testnet.height);
+
+    let bytes = Buffer.from(testnet.intermediate_nodes.join(""), 'hex');
+    endianness(bytes, 32);
+
+    let txid = Buffer.from(testnet.tx_id, 'hex');
+    endianness(txid, 32);
+
+    // checks default stable confirmations
+    await relay.verifyTx(testnet.height, testnet.index, "0x" + txid.toString('hex'), "0x" + bytes.toString('hex'), 0, true);
   });
 });
