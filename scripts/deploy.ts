@@ -12,8 +12,8 @@ type Genesis = {
 // };
   
 const testnet: Genesis = {
-    header: '0x0000002052ee0268400be3acb86eb36901b25729a7170f70d7d34adf60cb4e2200000000212a63e6c467ccc5a5dcbcf890fc0167fe5c7b8040a0adf71ea40dccd6d6cdc0ea16d95effff001d98dc7aac',
-    height: 1747713,
+    header: '0x0000002095b7fb255f6502d2209fe7a0ff8a510bc8ffbcde7dca03367ce10000000000008abb2198c91e57c95b7a66b2910da8f580a0afe4c6ff0301325f18bf9b6d5c45a8aadf5effff001b8b138460',
+    height: 1764652,
 };
 
 // const regtest: Genesis = {
