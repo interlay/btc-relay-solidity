@@ -11,14 +11,13 @@ contract Relay is IRelay {
     using SafeMath for uint256;
     using BytesLib for bytes;
     using BTCUtils for bytes;
-    using ValidateSPV for bytes;
 
     // TODO: optimize storage costs
     struct Header {
-        bytes32 merkle; // merkle tree root
-        uint256 height; // height of this block header
+        bool exists;
+        uint64 timestamp; // block timestamp
+        uint64 height; // height of this block header
         uint256 target; // block target
-        uint256 timestamp; // block timestamp
         uint256 chainWork; // accumulated PoW at this height
         uint256 chainId; // identifier of chain fork
     }
@@ -30,7 +29,7 @@ contract Relay is IRelay {
     mapping(uint256 => bytes32) public _chain;
 
     struct Fork {
-        uint256 height; // best height of fork
+        uint64 height; // best height of fork
         bytes32 ancestor; // branched from this
         bytes32[] descendants; // references to submitted block headers
     }
@@ -41,7 +40,7 @@ contract Relay is IRelay {
     // block with the most accumulated work, i.e., blockchain tip
     bytes32 internal _bestBlock;
     uint256 internal _bestScore;
-    uint256 internal _bestHeight;
+    uint64 internal _bestHeight;
 
     // incrementing counter to track forks
     // OPTIMIZATION: default to zero value
@@ -49,7 +48,7 @@ contract Relay is IRelay {
 
     // header of the block at the start of the difficulty period
     uint256 public _epochStartTarget;
-    uint256 public _epochStartTime;
+    uint64 public _epochStartTime;
 
     // CONSTANTS
     /*
@@ -83,13 +82,12 @@ contract Relay is IRelay {
     */
     constructor(
         bytes memory header,
-        uint256 height
+        uint64 height
     ) public {
         require(header.length == 80, ERR_INVALID_HEADER_SIZE);
         bytes32 digest = header.hash256();
-        bytes32 merkle = header.extractMerkleRootLE().toBytes32();
         uint256 target = header.extractTarget();
-        uint256 timestamp = header.extractTimestamp();
+        uint64 timestamp = header.extractTimestamp();
         uint256 chainId = MAIN_CHAIN_ID;
         uint256 difficulty = header.extractDifficulty();
 
@@ -105,7 +103,6 @@ contract Relay is IRelay {
 
         _storeBlockHeader(
             digest,
-            merkle,
             height,
             target,
             timestamp,
@@ -122,18 +119,18 @@ contract Relay is IRelay {
 
         // Fail if block already exists
         // Time is always set in block header struct (prevBlockHash and height can be 0 for Genesis block)
-        require(_headers[hashCurrBlock].merkle == 0, ERR_DUPLICATE_BLOCK);
+        require(!_headers[hashCurrBlock].exists, ERR_DUPLICATE_BLOCK);
 
         // Fail if previous block hash not in current state of main chain
-        require(_headers[hashPrevBlock].merkle != 0, ERR_PREVIOUS_BLOCK);
+        require(_headers[hashPrevBlock].exists, ERR_PREVIOUS_BLOCK);
 
         uint256 target = header.extractTarget();
 
         // Check the PoW solution matches the target specified in the block header
         require(abi.encodePacked(hashCurrBlock).reverseEndianness().bytesToUint() <= target, ERR_LOW_DIFFICULTY);
 
-        uint256 height = 1 + _headers[hashPrevBlock].height;
-        uint256 timestamp = header.extractTimestamp();
+        uint64 height = 1 + _headers[hashPrevBlock].height;
+        uint64 timestamp = header.extractTimestamp();
 
         // Check the specified difficulty target is correct
         (bool valid, bool update) = isCorrectDifficultyTarget(
@@ -151,9 +148,7 @@ contract Relay is IRelay {
             _epochStartTime = timestamp;
         }
 
-        bytes32 merkle = header.extractMerkleRootLE().toBytes32();
-        uint256 chainWork = _headers[hashPrevBlock].chainWork + header.extractDifficulty();
-
+        uint256 chainWork = _headers[hashPrevBlock].chainWork.add(header.extractDifficulty());
         uint256 chainId = _headers[hashPrevBlock].chainId;
         bool isNewFork = _forks[chainId].height != _headers[hashPrevBlock].height;
 
@@ -163,7 +158,6 @@ contract Relay is IRelay {
 
             _storeBlockHeader(
                 hashCurrBlock,
-                merkle,
                 height,
                 target,
                 timestamp,
@@ -173,7 +167,6 @@ contract Relay is IRelay {
         } else {
             _storeBlockHeader(
                 hashCurrBlock,
-                merkle,
                 height,
                 target,
                 timestamp,
@@ -221,22 +214,19 @@ contract Relay is IRelay {
 
     function _storeBlockHeader(
         bytes32 digest,
-        bytes32 merkle,
-        uint256 height,
+        uint64 height,
         uint256 target,
-        uint256 timestamp,
+        uint64 timestamp,
         uint256 chainId,
         uint256 chainWork
     ) internal {
         _chain[height] = digest;
-        _headers[digest] = Header({
-            merkle: merkle,
-            height: height,
-            target: target,
-            timestamp: timestamp,
-            chainId: chainId,
-            chainWork: chainWork
-        });
+        _headers[digest].exists = true;
+        _headers[digest].timestamp = timestamp;
+        _headers[digest].height = height;
+        _headers[digest].target = target;
+        _headers[digest].chainId = chainId;
+        _headers[digest].chainWork = chainWork;
         emit StoreHeader(digest, height);
     }
 
@@ -245,7 +235,7 @@ contract Relay is IRelay {
         return _chainCounter;
     }
 
-    function _initializeFork(bytes32 hashCurrBlock, bytes32 hashPrevBlock, uint chainId, uint height) internal {
+    function _initializeFork(bytes32 hashCurrBlock, bytes32 hashPrevBlock, uint chainId, uint64 height) internal {
         bytes32[] memory descendants = new bytes32[](1);
         descendants[0] = hashCurrBlock;
 
@@ -256,11 +246,11 @@ contract Relay is IRelay {
         });
     }
 
-    function _reorgChain(uint chainId, uint height, bytes32 hashCurrBlock, uint chainWork) internal {
+    function _reorgChain(uint chainId, uint64 height, bytes32 hashCurrBlock, uint chainWork) internal {
         // reorg fork to main
         uint256 ancestorId = chainId;
         uint256 forkId = _incrementChainCounter();
-        uint256 forkHeight = height - 1;
+        uint64 forkHeight = height - 1;
 
         // TODO: add new fork struct for old main
 
@@ -299,17 +289,17 @@ contract Relay is IRelay {
     * @param _height block height to be checked
     * @return true, if block _height is at difficulty adjustment interval, otherwise false
     */
-    function _shouldAdjustDifficulty(uint256 height) internal pure returns (bool){
+    function _shouldAdjustDifficulty(uint64 height) internal pure returns (bool){
         return height % DIFFICULTY_ADJUSTMENT_INTERVAL == 0;
     }
 
     function isCorrectDifficultyTarget(
         uint256 prevStartTarget,    // period starting target
-        uint256 prevStartTime,      // period starting timestamp
+        uint64 prevStartTime,      // period starting timestamp
         uint256 prevEndTarget,      // period ending target
-        uint256 prevEndTime,        // period ending timestamp
+        uint64 prevEndTime,        // period ending timestamp
         uint256 nextTarget,
-        uint256 height
+        uint64 height
     ) public pure returns (bool valid, bool update) {
         if(!_shouldAdjustDifficulty(height)) {
             if(nextTarget != prevEndTarget && prevEndTarget != 0) {
@@ -333,34 +323,33 @@ contract Relay is IRelay {
     }
 
     function getHeaderByHash(bytes32 digest) external view returns (
-        uint256 height,
-        bytes32 merkle,
+        uint64 height,
         uint256 target,
-        uint256 time
+        uint64 time
     ) {
         Header storage head = _headers[digest];
-        require(head.merkle > 0, ERR_BLOCK_NOT_FOUND);
+        require(head.exists, ERR_BLOCK_NOT_FOUND);
         time = head.timestamp;
-        merkle = head.merkle;
         target = head.target;
         height = head.height;
-        return(height, merkle, target, time);
+        return(height, target, time);
     }
 
-    function getHashAtHeight(uint256 height) external view returns (bytes32) {
+    function getHashAtHeight(uint64 height) external view returns (bytes32) {
         bytes32 digest = _chain[height];
         require(digest > 0, ERR_BLOCK_NOT_FOUND);
         return digest;
     }
 
-    function getBestBlock() external view returns (bytes32 digest, uint256 score, uint256 height) {
+    function getBestBlock() external view returns (bytes32 digest, uint256 score, uint64 height) {
         return (_bestBlock, _bestScore, _bestHeight);
     }
 
     function verifyTx(
-        uint256 height,
+        uint64 height,
         uint256 index,
         bytes32 txid,
+        bytes calldata header,
         bytes calldata proof,
         uint256 confirmations,
         bool insecure
@@ -379,8 +368,8 @@ contract Relay is IRelay {
             );
         }
 
-        bytes32 root = _headers[_chain[height]].merkle;
-        require(root.length > 0, ERR_BLOCK_NOT_FOUND);
+        require(_chain[height] == header.hash256(), ERR_BLOCK_NOT_FOUND);
+        bytes32 root = header.extractMerkleRootLE().toBytes32();
         require(
             ValidateSPV.prove(
                 txid,

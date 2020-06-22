@@ -40,7 +40,12 @@
     "type": "git",
     "url": "git+https://gitlab.com/interlay/btc-relay-sol.git"
   },
-  "author": "",
+  "maintainers": [
+    "Gregory Hill",
+    "Alexei Zamyatin",
+    "Dominik Harz",
+    "Daniel Perez"
+  ],
   "license": "ISC",
   "bugs": {
     "url": "https://gitlab.com/interlay/btc-relay-sol/issues"

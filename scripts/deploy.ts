@@ -1,10 +1,5 @@
 import { ethers } from "@nomiclabs/buidler";
-import { TestRelayFactory } from '../typechain/TestRelayFactory'
-
-type Genesis = {
-  header: string,
-  height: number,
-}
+import { DeployTestRelay, Genesis } from "./contracts";
 
 // const mainnet: Genesis = {
 //     header: '0x000040202842774747733a4863b6bbb7b4cfb66baa9287d5ce0d13000000000000000000df550e01d02ee37fce8dd2fbf919a47b8b65684bcb48d4da699078916da2f7decbc7905ebc2013178f58d533',
@@ -21,14 +16,12 @@ const testnet: Genesis = {
 //   height: 0,
 // }
 
-async function main(start: Genesis) {
-	let signers = await ethers.signers();
-  const factory = new TestRelayFactory(signers[0]);
-  let contract = await factory.deploy(start.header, start.height);
-  console.log(`Genesis height: ${start.height}`);
+async function main(genesis: Genesis) {
+  let signers = await ethers.signers();
+  let contract = await DeployTestRelay(signers[0], genesis);
+  console.log(`Genesis height: ${genesis.height}`);
   console.log(`Contract address: ${contract.address}`);
   // console.log(await contract.getHashAtHeight(start.height));
-  await contract.deployed();
 }
 
 main(testnet)

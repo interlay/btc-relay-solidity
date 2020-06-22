@@ -20,7 +20,7 @@ contract TestRelay is Relay {
     */
     constructor(
         bytes memory header,
-        uint256 height
+        uint64 height
     ) public Relay(header, height) {}
 
     function _submitBlockHeader(bytes memory header) internal {
@@ -31,24 +31,22 @@ contract TestRelay is Relay {
 
         // Fail if block already exists
         // Time is always set in block header struct (prevBlockHash and height can be 0 for Genesis block)
-        require(_headers[hashCurrBlock].merkle == 0, ERR_DUPLICATE_BLOCK);
+        require(!_headers[hashCurrBlock].exists, ERR_DUPLICATE_BLOCK);
 
         // Fail if previous block hash not in current state of main chain
-        require(_headers[hashPrevBlock].merkle != 0, ERR_PREVIOUS_BLOCK);
+        require(_headers[hashPrevBlock].exists, ERR_PREVIOUS_BLOCK);
 
         uint256 target = header.extractTarget();
 
         // Check the PoW solution matches the target specified in the block header
         require(abi.encodePacked(hashCurrBlock).reverseEndianness().bytesToUint() <= target, ERR_LOW_DIFFICULTY);
 
-        uint256 height = 1 + _headers[hashPrevBlock].height;
-        uint256 timestamp = header.extractTimestamp();
+        uint64 height = 1 + _headers[hashPrevBlock].height;
+        uint64 timestamp = header.extractTimestamp();
 
         // NO DIFFICULTY CHECK
 
-        bytes32 merkle = header.extractMerkleRootLE().toBytes32();
         uint256 chainWork = _headers[hashPrevBlock].chainWork + header.extractDifficulty();
-
         uint256 chainId = _headers[hashPrevBlock].chainId;
         bool isNewFork = _forks[chainId].height != _headers[hashPrevBlock].height;
 
@@ -58,7 +56,6 @@ contract TestRelay is Relay {
 
             _storeBlockHeader(
                 hashCurrBlock,
-                merkle,
                 height,
                 target,
                 timestamp,
@@ -68,7 +65,6 @@ contract TestRelay is Relay {
         } else {
             _storeBlockHeader(
                 hashCurrBlock,
-                merkle,
                 height,
                 target,
                 timestamp,

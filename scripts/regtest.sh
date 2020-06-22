@@ -1,10 +1,7 @@
 #!/bin/bash
 
-#bitcoind -regtest -daemon -rest -txindex
+# bitcoind -regtest -daemon -rest -txindex
 
-
-
-#
 ADDRESS1=$(bitcoin-cli -regtest getnewaddress "sender") 
 ADDRESS2=$(bitcoin-cli -regtest getnewaddress "receiver")
 

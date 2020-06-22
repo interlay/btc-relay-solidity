@@ -40,11 +40,11 @@ describe("Proofs", () => {
     expect(await getBestBlockHeight(relay)).to.eq(5);
 
     // checks default stable confirmations
-    let result = relay.verifyTx(0, tx.index, tx.tx_id, tx.intermediate_nodes, 0, false);
+    let result = relay.verifyTx(0, tx.index, tx.tx_id, genesisHeader, tx.intermediate_nodes, 0, false);
     expect(result).to.be.revertedWith(ErrorCode.ERR_CONFIRMS);
 
     // checks custom period
-    result = relay.verifyTx(0, tx.index, tx.tx_id, tx.intermediate_nodes, 100, true);
+    result = relay.verifyTx(0, tx.index, tx.tx_id, genesisHeader, tx.intermediate_nodes, 100, true);
     expect(result).to.be.revertedWith(ErrorCode.ERR_CONFIRMS);
   });
 
@@ -53,8 +53,8 @@ describe("Proofs", () => {
     expect(await getBestBlockHeight(relay)).to.eq(100);
 
     // checks default stable confirmations
-    let result = relay.verifyTx(0, tx.index, tx.tx_id, tx.intermediate_nodes, 0, false);
-    expect(result).to.be.revertedWith(ErrorCode.ERR_VERIFY_TX);
+    let result = relay.verifyTx(0, tx.index, tx.tx_id, genesisHeader, tx.intermediate_nodes, 0, false);
+    expect(result).to.be.revertedWith(ErrorCode.ERR_BLOCK_NOT_FOUND);
   });
 
   it("should validate inclusion", async () => {
@@ -62,7 +62,7 @@ describe("Proofs", () => {
     expect(await getBestBlockHeight(relay)).to.eq(0);
 
     // checks default stable confirmations
-    await relay.verifyTx(0, tx.index, tx.tx_id, tx.intermediate_nodes, 0, true);
+    await relay.verifyTx(0, tx.index, tx.tx_id, genesisHeader, tx.intermediate_nodes, 0, true);
   });
 
   let testnet1 = {
@@ -90,7 +90,7 @@ describe("Proofs", () => {
     let txid = Buffer.from(testnet1.tx_id, 'hex').reverse().toString('hex');
 
     // checks default stable confirmations
-    await relay.verifyTx(testnet1.height, testnet1.index, "0x" + txid, "0x" + proof, 0, true);
+    await relay.verifyTx(testnet1.height, testnet1.index, "0x" + txid, testnet1.header, "0x" + proof, 0, true);
   });
 
   let testnet2 = {
@@ -118,6 +118,6 @@ describe("Proofs", () => {
     let txid = Buffer.from(testnet2.tx_id, 'hex').reverse().toString('hex');
 
     // checks default stable confirmations
-    await relay.verifyTx(testnet2.height, testnet2.index, "0x" + txid, "0x" + proof, 0, true);
+    await relay.verifyTx(testnet2.height, testnet2.index, "0x" + txid, testnet2.header, "0x" + proof, 0, true);
   });
 });

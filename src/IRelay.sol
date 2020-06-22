@@ -5,7 +5,7 @@ interface IRelay {
     * @param digest block header hash of block header submitted for storage
     * @param height height of the stored block
     */
-    event StoreHeader(bytes32 indexed digest, uint256 indexed height);
+    event StoreHeader(bytes32 indexed digest, uint64 indexed height);
 
     /**
     * @param from previous best block hash
@@ -24,15 +24,14 @@ interface IRelay {
     function submitBlockHeaderBatch(bytes calldata headers) external;
 
     function getHeaderByHash(bytes32 digest) external view returns (
-        uint256 height,
-        bytes32 merkle,
+        uint64 height,
         uint256 target,
-        uint256 time
+        uint64 time
     );
 
-    function getHashAtHeight(uint256 height) external view returns (bytes32);
+    function getHashAtHeight(uint64 height) external view returns (bytes32);
 
-    function getBestBlock() external view returns (bytes32 digest, uint256 score, uint256 height);
+    function getBestBlock() external view returns (bytes32 digest, uint256 score, uint64 height);
 
     /**
     * @notice verifies that a transaction is included in a block
@@ -45,9 +44,10 @@ interface IRelay {
     * @return true if _txid is included, false otherwise
     */
     function verifyTx(
-        uint256 height,
+        uint64 height,
         uint256 index,
         bytes32 txid,
+        bytes calldata header,
         bytes calldata proof,
         uint256 confirmations,
         bool insecure

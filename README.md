@@ -49,7 +49,19 @@ npm test
 
 ## Deployments
 
+### Gas Costs
+
+| Function            | Gas     |
+|---------------------|---------|
+| `constructor`       | 1967005 |
+| `submitBlockHeader` | 159582  |
+| `submitBlockHeader` | 159594  |
+| `submitBlockHeader` | 159570  |
+| `submitBlockHeader` | 159558  |
+| `submitBlockHeader` | 159582  |
+| `submitBlockHeader` | 159546  |
+| `verifyTx`          | 62888   |
+
 ### Ropsten
 
 `0x78A389B693e0E3DE1849F34e70bf4Bcb57F0F2bb`
-
