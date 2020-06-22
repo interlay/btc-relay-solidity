@@ -16,6 +16,13 @@ contract ParserDelegate {
         return _rawTx.extractOutputLength();
     }
 
+    function extractNumOutputs(bytes memory _rawTx, uint256 _index) public pure returns (uint) {
+        (, uint lenInputs) = _rawTx.extractInputLength();
+        bytes memory outputs = _rawTx.slice(lenInputs, _rawTx.length - lenInputs);
+        (uint numOutputs, ) = outputs.extractOutputLength();
+        return numOutputs;
+    }
+
     function extractOutputAtIndex(bytes memory _rawTx, uint256 _index) public pure returns (bytes memory) {
         (, uint lenInputs) = _rawTx.extractInputLength();
         return _rawTx.slice(lenInputs, _rawTx.length - lenInputs).extractOutputAtIndex(_index);

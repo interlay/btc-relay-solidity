@@ -5,7 +5,6 @@ import { deployContract, solidity } from "ethereum-waffle";
 import RelayArtifact from "../artifacts/Relay.json";
 import { Relay } from "../typechain/Relay"
 import { ErrorCode } from './constants';
-import endianness from 'endianness';
 
 chai.use(solidity);
 const { expect } = chai;
@@ -66,7 +65,7 @@ describe("Proofs", () => {
     await relay.verifyTx(0, tx.index, tx.tx_id, tx.intermediate_nodes, 0, true);
   });
 
-  let testnet = {
+  let testnet1 = {
     tx_id: "e50f29833077b92270a011594c87d8e2b02f80c4cf010adf4006587877381808",
     index: 64,
     intermediate_nodes: [ 
@@ -83,17 +82,42 @@ describe("Proofs", () => {
     height: 1747715,
   };
 
-  it("should validate inclusion", async () => {
-    relay = await deployContract(<Wallet>signers[0], RelayArtifact, [testnet.header, testnet.height]) as Relay;
-    expect(await getBestBlockHeight(relay)).to.eq(testnet.height);
+  it("should validate inclusion (testnet1)", async () => {
+    relay = await deployContract(<Wallet>signers[0], RelayArtifact, [testnet1.header, testnet1.height]) as Relay;
+    expect(await getBestBlockHeight(relay)).to.eq(testnet1.height);
 
-    let bytes = Buffer.from(testnet.intermediate_nodes.join(""), 'hex');
-    endianness(bytes, 32);
-
-    let txid = Buffer.from(testnet.tx_id, 'hex');
-    endianness(txid, 32);
+    let proof = testnet1.intermediate_nodes.map((value) => Buffer.from(value, 'hex').reverse().toString('hex')).join("");
+    let txid = Buffer.from(testnet1.tx_id, 'hex').reverse().toString('hex');
 
     // checks default stable confirmations
-    await relay.verifyTx(testnet.height, testnet.index, "0x" + txid.toString('hex'), "0x" + bytes.toString('hex'), 0, true);
+    await relay.verifyTx(testnet1.height, testnet1.index, "0x" + txid, "0x" + proof, 0, true);
+  });
+
+  let testnet2 = {
+    tx_id: "73582c8fddd60c0778bb9d449231d732f797c7d1e8197a62135b792291c9a12a",
+    index: 26,
+    intermediate_nodes: [
+      "12e3bce112e5744a17d3b28c675dab949921793ded7d9faaca3acc9f5778aa80",
+      "a6fd121f036eb80f9af9e8c67b4ace9dd7b8eb4e7846a3f252ded91d0c189d76",
+      "eebe422586731163966ebdff7f7a7c79602eb1d501786d03fffbbf4b55004c3c",
+      "82e7be4cbc28e6c6e7624b6bd84bab794fb8fccfbfad3416b46f6172798ced5d",
+      "49c30a3753ec196af0931d9e4e4269f8d0ff09815f848026d5e0fa8b8cb242ef",
+      "33824ede7279221f779a0dc899028c5fff694376bb73bb0195985e2fd2431de9",
+      "03857fe3d3bb2e412e309c616f89ae2d7a4219adaa608f0480ae4ca4391046a9",
+    ],
+    header: "0x00e0ff2ffb2b253e060112bed62614fcf9ae61f82c08d9e6c36a1b53070000000000000003b91283ae15b75dc2023735356f1412411d07ece715f3ed0e612ab4349b7db83030eb5ef2a5011add0c8e82",
+    headerHash: "0x00000000000000f6cf3b73d47abb326b4a60e23ce24e02396e9edfe5c95622f5",
+    height: 1772070,
+  };
+
+  it("should validate inclusion (testnet2)", async () => {
+    relay = await deployContract(<Wallet>signers[0], RelayArtifact, [testnet2.header, testnet2.height]) as Relay;
+    expect(await getBestBlockHeight(relay)).to.eq(testnet2.height);
+
+    let proof = testnet2.intermediate_nodes.map((value) => Buffer.from(value, 'hex').reverse().toString('hex')).join("");
+    let txid = Buffer.from(testnet2.tx_id, 'hex').reverse().toString('hex');
+
+    // checks default stable confirmations
+    await relay.verifyTx(testnet2.height, testnet2.index, "0x" + txid, "0x" + proof, 0, true);
   });
 });

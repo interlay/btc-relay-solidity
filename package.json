@@ -5,8 +5,7 @@
   "dependencies": {
     "@summa-tx/bitcoin-spv-sol": "3.0.0",
     "bech32": "^1.1.4",
-    "bitcoinjs-lib": "^5.1.7",
-    "endianness": "^8.0.2"
+    "bitcoinjs-lib": "^5.1.7"
   },
   "devDependencies": {
     "@nomiclabs/buidler": "^1.1.2",
