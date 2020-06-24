@@ -15,10 +15,7 @@ contract Relay is IRelay {
     // TODO: optimize storage costs
     struct Header {
         bool exists;
-        uint64 timestamp; // block timestamp
         uint64 height; // height of this block header
-        uint256 target; // block target
-        uint256 chainWork; // accumulated PoW at this height
         uint256 chainId; // identifier of chain fork
     }
 
@@ -37,26 +34,23 @@ contract Relay is IRelay {
     // mapping of ids to forks
     mapping(uint256 => Fork) public _forks;
 
-    // block with the most accumulated work, i.e., blockchain tip
-    bytes32 internal _bestBlock;
-    uint256 internal _bestScore;
-    uint64 internal _bestHeight;
-
     // incrementing counter to track forks
     // OPTIMIZATION: default to zero value
     uint256 private _chainCounter;
 
-    // header of the block at the start of the difficulty period
+    // target of the difficulty period
     uint256 public _epochStartTarget;
+    uint256 public _epochEndTarget;
+
     uint64 public _epochStartTime;
+    uint64 public _epochEndTime;
+
+    // block with the most accumulated work, i.e., blockchain tip
+    uint64 internal _bestHeight;
+    bytes32 internal _bestBlock;
 
     // CONSTANTS
-    /*
-    * Bitcoin difficulty constants
-    */
     uint256 public constant DIFFICULTY_ADJUSTMENT_INTERVAL = 2016;
-    uint256 public constant DIFF_TARGET = 0xffff0000000000000000000000000000000000000000000000000000;
-
     uint256 public constant MAIN_CHAIN_ID = 0;
     uint256 public constant CONFIRMATIONS = 6;
 
@@ -89,10 +83,8 @@ contract Relay is IRelay {
         uint256 target = header.extractTarget();
         uint64 timestamp = header.extractTimestamp();
         uint256 chainId = MAIN_CHAIN_ID;
-        uint256 difficulty = header.extractDifficulty();
 
         _bestBlock = digest;
-        _bestScore = difficulty;
         _bestHeight = height;
 
         _forks[chainId].height = height;
@@ -100,14 +92,13 @@ contract Relay is IRelay {
 
         _epochStartTarget = target;
         _epochStartTime = timestamp;
+        _epochEndTarget = target;
+        _epochEndTime = timestamp;
 
         _storeBlockHeader(
             digest,
             height,
-            target,
-            timestamp,
-            chainId,
-            difficulty
+            chainId
         );
     }
 
@@ -118,7 +109,6 @@ contract Relay is IRelay {
         bytes32 hashCurrBlock = header.hash256();
 
         // Fail if block already exists
-        // Time is always set in block header struct (prevBlockHash and height can be 0 for Genesis block)
         require(!_headers[hashCurrBlock].exists, ERR_DUPLICATE_BLOCK);
 
         // Fail if previous block hash not in current state of main chain
@@ -130,25 +120,29 @@ contract Relay is IRelay {
         require(abi.encodePacked(hashCurrBlock).reverseEndianness().bytesToUint() <= target, ERR_LOW_DIFFICULTY);
 
         uint64 height = 1 + _headers[hashPrevBlock].height;
-        uint64 timestamp = header.extractTimestamp();
 
         // Check the specified difficulty target is correct
-        (bool valid, bool update) = isCorrectDifficultyTarget(
-            _epochStartTarget,
-            _epochStartTime,
-            _headers[hashPrevBlock].target,
-            _headers[hashPrevBlock].timestamp,
-            target,
-            height
-        );
+        
+        uint64 timestamp = header.extractTimestamp();
+        if (_shouldAdjustDifficulty(height)) {
+            require(isCorrectDifficultyTarget(
+                _epochStartTarget,
+                _epochStartTime,
+                _epochEndTarget,
+                _epochEndTime,
+                target
+            ), ERR_DIFF_TARGET_HEADER);
 
-        require(valid, ERR_DIFF_TARGET_HEADER);
-        if (update) {
             _epochStartTarget = target;
             _epochStartTime = timestamp;
+        } else {
+            // if(nextTarget != prevEndTarget && prevEndTarget != 0) {
+            //     return (false, false);
+            // }
+            _epochEndTarget = target;
+            _epochEndTime = timestamp;
         }
 
-        uint256 chainWork = _headers[hashPrevBlock].chainWork.add(header.extractDifficulty());
         uint256 chainId = _headers[hashPrevBlock].chainId;
         bool isNewFork = _forks[chainId].height != _headers[hashPrevBlock].height;
 
@@ -159,28 +153,18 @@ contract Relay is IRelay {
             _storeBlockHeader(
                 hashCurrBlock,
                 height,
-                target,
-                timestamp,
-                chainId,
-                chainWork
+                chainId
             );
         } else {
             _storeBlockHeader(
                 hashCurrBlock,
                 height,
-                target,
-                timestamp,
-                chainId,
-                chainWork
+                chainId
             );
 
             if (chainId == MAIN_CHAIN_ID) {
-                // check that the submitted block is extending the main chain
-                require(chainWork > _bestScore, ERR_NOT_EXTENSION);
-
                 _bestBlock = hashCurrBlock;
                 _bestHeight = height;
-                _bestScore = chainWork;
 
                 // extend height of main chain
                 _forks[chainId].height = height;
@@ -188,7 +172,7 @@ contract Relay is IRelay {
 
             } else if (height >= _bestHeight + CONFIRMATIONS) {
                 // with sufficient confirmations, reorg
-                _reorgChain(chainId, height, hashCurrBlock, chainWork);
+                _reorgChain(chainId, height, hashCurrBlock);
 
             } else {
                 // extend fork
@@ -215,18 +199,12 @@ contract Relay is IRelay {
     function _storeBlockHeader(
         bytes32 digest,
         uint64 height,
-        uint256 target,
-        uint64 timestamp,
-        uint256 chainId,
-        uint256 chainWork
+        uint256 chainId
     ) internal {
         _chain[height] = digest;
         _headers[digest].exists = true;
-        _headers[digest].timestamp = timestamp;
         _headers[digest].height = height;
-        _headers[digest].target = target;
         _headers[digest].chainId = chainId;
-        _headers[digest].chainWork = chainWork;
         emit StoreHeader(digest, height);
     }
 
@@ -239,14 +217,12 @@ contract Relay is IRelay {
         bytes32[] memory descendants = new bytes32[](1);
         descendants[0] = hashCurrBlock;
 
-        _forks[chainId] = Fork({
-            height: height,
-            ancestor: hashPrevBlock,
-            descendants: descendants
-        });
+        _forks[chainId].height = height;
+        _forks[chainId].ancestor = hashPrevBlock;
+        _forks[chainId].descendants = descendants;
     }
 
-    function _reorgChain(uint chainId, uint64 height, bytes32 hashCurrBlock, uint chainWork) internal {
+    function _reorgChain(uint chainId, uint64 height, bytes32 hashCurrBlock) internal {
         // reorg fork to main
         uint256 ancestorId = chainId;
         uint256 forkId = _incrementChainCounter();
@@ -275,7 +251,6 @@ contract Relay is IRelay {
 
         _bestBlock = hashCurrBlock;
         _bestHeight = height;
-        _bestScore = chainWork;
 
         delete _forks[chainId];
 
@@ -294,55 +269,38 @@ contract Relay is IRelay {
     }
 
     function isCorrectDifficultyTarget(
-        uint256 prevStartTarget,    // period starting target
+        uint256 prevStartTarget,   // period starting target
         uint64 prevStartTime,      // period starting timestamp
-        uint256 prevEndTarget,      // period ending target
+        uint256 prevEndTarget,     // period ending target
         uint64 prevEndTime,        // period ending timestamp
-        uint256 nextTarget,
-        uint64 height
-    ) public pure returns (bool valid, bool update) {
-        if(!_shouldAdjustDifficulty(height)) {
-            if(nextTarget != prevEndTarget && prevEndTarget != 0) {
-                return (false, false);
-            }
-        } else {
-            require(
-                BTCUtils.calculateDifficulty(prevStartTarget) == BTCUtils.calculateDifficulty(prevEndTarget),
-                ERR_DIFF_PERIOD
-            );
+        uint256 nextTarget
+    ) public pure returns (bool) {
+        require(
+            BTCUtils.calculateDifficulty(prevStartTarget) == BTCUtils.calculateDifficulty(prevEndTarget),
+            ERR_DIFF_PERIOD
+        );
 
-            uint256 expectedTarget = BTCUtils.retargetAlgorithm(
-                prevStartTarget,
-                prevStartTime,
-                prevEndTime
-            );
+        uint256 expectedTarget = BTCUtils.retargetAlgorithm(
+            prevStartTarget,
+            prevStartTime,
+            prevEndTime
+        );
 
-            return ((nextTarget & expectedTarget) == nextTarget, true);
-        }
-        return (true, false);
+        return (nextTarget & expectedTarget) == nextTarget;
     }
 
-    function getHeaderByHash(bytes32 digest) external view returns (
-        uint64 height,
-        uint256 target,
-        uint64 time
-    ) {
-        Header storage head = _headers[digest];
-        require(head.exists, ERR_BLOCK_NOT_FOUND);
-        time = head.timestamp;
-        target = head.target;
-        height = head.height;
-        return(height, target, time);
+    function getBlockHeight(bytes32 digest) external view returns (uint64) {
+        return _headers[digest].height;
     }
 
-    function getHashAtHeight(uint64 height) external view returns (bytes32) {
+    function getBlockHash(uint64 height) external view returns (bytes32) {
         bytes32 digest = _chain[height];
         require(digest > 0, ERR_BLOCK_NOT_FOUND);
         return digest;
     }
 
-    function getBestBlock() external view returns (bytes32 digest, uint256 score, uint64 height) {
-        return (_bestBlock, _bestScore, _bestHeight);
+    function getBestBlock() external view returns (bytes32 digest, uint64 height) {
+        return (_bestBlock, _bestHeight);
     }
 
     function verifyTx(

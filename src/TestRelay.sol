@@ -11,7 +11,6 @@ contract TestRelay is Relay {
     using SafeMath for uint256;
     using BytesLib for bytes;
     using BTCUtils for bytes;
-    using ValidateSPV for bytes;
 
     /**
     * @notice Initializes the relay with the provided block.
@@ -30,7 +29,6 @@ contract TestRelay is Relay {
         bytes32 hashCurrBlock = header.hash256();
 
         // Fail if block already exists
-        // Time is always set in block header struct (prevBlockHash and height can be 0 for Genesis block)
         require(!_headers[hashCurrBlock].exists, ERR_DUPLICATE_BLOCK);
 
         // Fail if previous block hash not in current state of main chain
@@ -42,11 +40,9 @@ contract TestRelay is Relay {
         require(abi.encodePacked(hashCurrBlock).reverseEndianness().bytesToUint() <= target, ERR_LOW_DIFFICULTY);
 
         uint64 height = 1 + _headers[hashPrevBlock].height;
-        uint64 timestamp = header.extractTimestamp();
 
         // NO DIFFICULTY CHECK
 
-        uint256 chainWork = _headers[hashPrevBlock].chainWork + header.extractDifficulty();
         uint256 chainId = _headers[hashPrevBlock].chainId;
         bool isNewFork = _forks[chainId].height != _headers[hashPrevBlock].height;
 
@@ -57,34 +53,24 @@ contract TestRelay is Relay {
             _storeBlockHeader(
                 hashCurrBlock,
                 height,
-                target,
-                timestamp,
-                chainId,
-                chainWork
+                chainId
             );
         } else {
             _storeBlockHeader(
                 hashCurrBlock,
                 height,
-                target,
-                timestamp,
-                chainId,
-                chainWork
+                chainId
             );
 
             if (chainId == MAIN_CHAIN_ID) {
-                // check that the submitted block is extending the main chain
-                require(chainWork > _bestScore, ERR_NOT_EXTENSION);
-
                 _bestBlock = hashCurrBlock;
                 _bestHeight = height;
-                _bestScore = chainWork;
 
                 // extend height of main chain
                 _forks[chainId].height = height;
                 _chain[height] = hashCurrBlock;
             } else if (height >= _bestHeight + CONFIRMATIONS) {
-                _reorgChain(chainId, height, hashCurrBlock, chainWork);
+                _reorgChain(chainId, height, hashCurrBlock);
             } else {
                 // extend fork
                 _forks[chainId].height = height;

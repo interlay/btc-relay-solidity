@@ -51,16 +51,17 @@ npm test
 
 ### Gas Costs
 
-| Function            | Gas     |
-|---------------------|---------|
-| `constructor`       | 1967005 |
-| `submitBlockHeader` | 159582  |
-| `submitBlockHeader` | 159594  |
-| `submitBlockHeader` | 159570  |
-| `submitBlockHeader` | 159558  |
-| `submitBlockHeader` | 159582  |
-| `submitBlockHeader` | 159546  |
-| `verifyTx`          | 62888   |
+| Function                 | Gas     | Description  |
+|--------------------------|---------|--------------|
+| `constructor`            | 1772513 | Genesis      |
+| `submitBlockHeader`      | 107385  | 1st Header   |
+| `submitBlockHeader`      | 107397  | 2nd Header   |
+| `submitBlockHeader`      | 107373  | 3rd Header   |
+| `submitBlockHeader`      | 107361  | 4th Header   |
+| `submitBlockHeader`      | 107385  | 5th Header   |
+| `submitBlockHeader`      | 107349  | 6th Header   |
+| `submitBlockHeaderBatch` | 477365  | Combined     |
+| `verifyTx`               | 62949   | Inclusion    |
 
 ### Ropsten
 

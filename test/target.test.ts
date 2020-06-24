@@ -44,9 +44,8 @@ describe("Retarget", () => {
       epoch.end.target,
       epoch.end.time,
       next.target,
-      next.height,
     );
-    expect(result.valid).to.eq(true);
+    expect(result).to.eq(true);
   });
 
   it("invalid difficulty target", async () => {
@@ -75,9 +74,8 @@ describe("Retarget", () => {
       epoch.end.target,
       epoch.end.time,
       next.target,
-      next.height,
     );
-    expect(result.valid).to.eq(false);
+    expect(result).to.eq(false);
   });
 
   it("invalid period", async () => {
@@ -106,7 +104,6 @@ describe("Retarget", () => {
       epoch.end.target,
       epoch.end.time,
       next.target,
-      next.height,
     );
     await expect(result).to.be.reverted;
   });

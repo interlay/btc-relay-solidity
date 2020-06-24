@@ -23,15 +23,11 @@ interface IRelay {
 
     function submitBlockHeaderBatch(bytes calldata headers) external;
 
-    function getHeaderByHash(bytes32 digest) external view returns (
-        uint64 height,
-        uint256 target,
-        uint64 time
-    );
+    function getBlockHeight(bytes32 digest) external view returns (uint64);
 
-    function getHashAtHeight(uint64 height) external view returns (bytes32);
+    function getBlockHash(uint64 height) external view returns (bytes32);
 
-    function getBestBlock() external view returns (bytes32 digest, uint256 score, uint64 height);
+    function getBestBlock() external view returns (bytes32 digest, uint64 height);
 
     /**
     * @notice verifies that a transaction is included in a block

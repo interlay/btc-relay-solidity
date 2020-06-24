@@ -25,11 +25,11 @@ describe("Gas", () => {
     relay = await deployContract(<Wallet>signers[0], RelayArtifact, [genesisHeader, genesisHeight]) as Relay;
     let deployCost = (await relay.deployTransaction.wait(1)).gasUsed?.toNumber();
     console.log(`Deploy: ${deployCost}`);
-    expect(deployCost).to.be.lt(2_100_000);
+    expect(deployCost).to.be.lt(1_900_000);
 
     let result = await relay.submitBlockHeader(header1);
     let updateCost = (await result.wait(1)).gasUsed?.toNumber();
     console.log(`Update: ${updateCost}`);
-    expect(updateCost).to.be.lt(205_000);
+    expect(updateCost).to.be.lt(120_000);
   });
 });

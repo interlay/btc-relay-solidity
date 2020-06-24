@@ -33,8 +33,8 @@ describe("Relay", () => {
     })
 
     // check header was stored correctly
-    const header = await relay.getHeaderByHash(genesisHash);
-    expect(header.height).to.eq(genesisHeight);
+    const height = await relay.getBlockHeight(genesisHash);
+    expect(height).to.eq(genesisHeight);
     // expect(header.merkle).to.eq("0xd1dd4e30908c361dfeabfb1e560281c1a270bde3c8719dbda7c8480053175944");
   });
 

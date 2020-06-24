@@ -9,7 +9,7 @@ chai.use(solidity);
 const { expect } = chai;
 
 async function getBestBlockDigest(relay: Relay) {
-  const {digest, score, height} = await relay.getBestBlock();
+  const {digest, height} = await relay.getBestBlock();
   return digest;
 }
 

@@ -30,12 +30,22 @@ async function submitHeader(relay: TestRelay, header: string) {
   console.log(`Gas [Header]: ${receipt.gasUsed?.toString()}`);
 }
 
+async function submitHeaderBatch(relay: TestRelay, ...headers: string[]) {
+  let batch = '0x' + headers.map((header) => {
+    return header.substr(2);
+  }).join("");
+  let transaction = await relay.submitBlockHeaderBatch(batch);
+  let receipt = await transaction.wait(0);
+  console.log(`Gas [Header - Batch]: ${receipt.gasUsed?.toString()}`);
+}
+
 async function main(genesis: Genesis) {
   let signers = await ethers.signers();
   let contract = await DeployTestRelay(signers[0], genesis);
   let receipt = await contract.deployTransaction.wait(0);  
   console.log(`Gas [Deploy]: ${receipt.gasUsed?.toString()}`);
 
+  // await submitHeaderBatch(contract, header1, header2, header3, header4, header5, header6);
   await submitHeader(contract, header1);
   await submitHeader(contract, header2);
   await submitHeader(contract, header3);
