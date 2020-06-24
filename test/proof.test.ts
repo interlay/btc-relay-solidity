@@ -120,4 +120,31 @@ describe("Proofs", () => {
     // checks default stable confirmations
     await relay.verifyTx(testnet2.height, testnet2.index, "0x" + txid, testnet2.header, "0x" + proof, 0, true);
   });
+
+  let testnet3 = {
+    tx_id: "71a127e01023ada604b85c05119e3ede49fe3e465159f5b905d394390a4be02b",
+    index: 30,
+    intermediate_nodes: [
+      "65604897c34192eb81daa8a711c7a11796ccb930b0805efa56abfb663c1699d6",
+      "99dd48c5c7ebf148dafb9825db6d7e6a4c051faea96db1eb0e6fd42a9be7c71f",
+      "188132f8725c964fe710857042f47c7bc57bd93672629d70859385fad2db33f9",
+      "e09ee89285475ab8afdd83efa5c9ede805abb4412227d3103d89169649a16894",
+      "f48041eb197669babf2991d39afea85b2b5cc78bc9bc2a69bdcf750626184511",
+      "0c91009701d6665535149683b8bc7116ce7d5d794b31f4839331062808c0b4ed"
+    ],
+    header: "0x00e0ff27c57b44820f2629d53e7ed7f1cb147407b6b059b1d9c479414901000000000000b3d9797f1e11c29e5f955051b3ab9a20043777f6620c5ebe3a01955c25196f9349f6f15ef2a5011aa9b53fc8",
+    headerHash: "0x00000000000000155b7e1e56cc21226981bb7bdf4c506f35c00aa01649321566",
+    height: 1773152,
+  };
+
+  it("should validate inclusion (testnet3)", async () => {
+    relay = await deployContract(<Wallet>signers[0], RelayArtifact, [testnet3.header, testnet3.height]) as Relay;
+    expect(await getBestBlockHeight(relay)).to.eq(testnet3.height);
+
+    let proof = testnet3.intermediate_nodes.map((value) => Buffer.from(value, 'hex').reverse().toString('hex')).join("");
+    let txid = Buffer.from(testnet3.tx_id, 'hex').reverse().toString('hex');
+
+    // checks default stable confirmations
+    await relay.verifyTx(testnet3.height, testnet3.index, "0x" + txid, testnet3.header, "0x" + proof, 0, true);
+  });
 });
