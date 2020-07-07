@@ -19,7 +19,7 @@ contract TestRelay is Relay {
     */
     constructor(
         bytes memory header,
-        uint64 height
+        uint32 height
     ) public Relay(header, height) {}
 
     function _submitBlockHeader(bytes memory header) internal {
@@ -39,7 +39,7 @@ contract TestRelay is Relay {
         // Check the PoW solution matches the target specified in the block header
         require(abi.encodePacked(hashCurrBlock).reverseEndianness().bytesToUint() <= target, ERR_LOW_DIFFICULTY);
 
-        uint64 height = 1 + _headers[hashPrevBlock].height;
+        uint32 height = 1 + _headers[hashPrevBlock].height;
 
         // NO DIFFICULTY CHECK
 

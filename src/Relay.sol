@@ -15,18 +15,18 @@ contract Relay is IRelay {
     // TODO: optimize storage costs
     struct Header {
         bool exists;
-        uint64 height; // height of this block header
-        uint256 chainId; // identifier of chain fork
+        uint32 height; // height of this block header
+        uint64 chainId; // identifier of chain fork
     }
 
     // mapping of block hashes to block headers (ALL ever submitted, i.e., incl. forks)
     mapping(bytes32 => Header) public _headers;
 
     // main chain mapping for constant time inclusion check
-    mapping(uint256 => bytes32) public _chain;
+    mapping(uint32 => bytes32) public _chain;
 
     struct Fork {
-        uint64 height; // best height of fork
+        uint32 height; // best height of fork
         bytes32 ancestor; // branched from this
         bytes32[] descendants; // references to submitted block headers
     }
@@ -46,7 +46,7 @@ contract Relay is IRelay {
     uint64 public _epochEndTime;
 
     // block with the most accumulated work, i.e., blockchain tip
-    uint64 internal _bestHeight;
+    uint32 internal _bestHeight;
     bytes32 internal _bestBlock;
 
     // CONSTANTS
@@ -76,7 +76,7 @@ contract Relay is IRelay {
     */
     constructor(
         bytes memory header,
-        uint64 height
+        uint32 height
     ) public {
         require(header.length == 80, ERR_INVALID_HEADER_SIZE);
         bytes32 digest = header.hash256();
@@ -119,10 +119,10 @@ contract Relay is IRelay {
         // Check the PoW solution matches the target specified in the block header
         require(abi.encodePacked(hashCurrBlock).reverseEndianness().bytesToUint() <= target, ERR_LOW_DIFFICULTY);
 
-        uint64 height = 1 + _headers[hashPrevBlock].height;
+        uint32 height = 1 + _headers[hashPrevBlock].height;
 
         // Check the specified difficulty target is correct
-        
+
         uint64 timestamp = header.extractTimestamp();
         if (_shouldAdjustDifficulty(height)) {
             require(isCorrectDifficultyTarget(
@@ -198,13 +198,13 @@ contract Relay is IRelay {
 
     function _storeBlockHeader(
         bytes32 digest,
-        uint64 height,
+        uint32 height,
         uint256 chainId
     ) internal {
         _chain[height] = digest;
         _headers[digest].exists = true;
         _headers[digest].height = height;
-        _headers[digest].chainId = chainId;
+        _headers[digest].chainId = uint64(chainId);
         emit StoreHeader(digest, height);
     }
 
@@ -213,7 +213,7 @@ contract Relay is IRelay {
         return _chainCounter;
     }
 
-    function _initializeFork(bytes32 hashCurrBlock, bytes32 hashPrevBlock, uint chainId, uint64 height) internal {
+    function _initializeFork(bytes32 hashCurrBlock, bytes32 hashPrevBlock, uint chainId, uint32 height) internal {
         bytes32[] memory descendants = new bytes32[](1);
         descendants[0] = hashCurrBlock;
 
@@ -222,11 +222,11 @@ contract Relay is IRelay {
         _forks[chainId].descendants = descendants;
     }
 
-    function _reorgChain(uint chainId, uint64 height, bytes32 hashCurrBlock) internal {
+    function _reorgChain(uint chainId, uint32 height, bytes32 hashCurrBlock) internal {
         // reorg fork to main
         uint256 ancestorId = chainId;
         uint256 forkId = _incrementChainCounter();
-        uint64 forkHeight = height - 1;
+        uint32 forkHeight = height - 1;
 
         // TODO: add new fork struct for old main
 
@@ -235,9 +235,9 @@ contract Relay is IRelay {
                 // get next descendant in fork
                 bytes32 descendant = _forks[ancestorId].descendants[i-1];
                 // promote header to main chain
-                _headers[descendant].chainId = MAIN_CHAIN_ID;
+                _headers[descendant].chainId = uint64(MAIN_CHAIN_ID);
                 // demote old header to new fork
-                _headers[_chain[height]].chainId = forkId;
+                _headers[_chain[height]].chainId = uint64(forkId);
                 // swap header at height
                 _chain[height] = descendant;
                 forkHeight--;
@@ -256,7 +256,7 @@ contract Relay is IRelay {
 
         // extend to current head
         _chain[_bestHeight] = _bestBlock;
-        _headers[_bestBlock].chainId = MAIN_CHAIN_ID;
+        _headers[_bestBlock].chainId = uint64(MAIN_CHAIN_ID);
     }
 
     /*
@@ -264,7 +264,7 @@ contract Relay is IRelay {
     * @param _height block height to be checked
     * @return true, if block _height is at difficulty adjustment interval, otherwise false
     */
-    function _shouldAdjustDifficulty(uint64 height) internal pure returns (bool){
+    function _shouldAdjustDifficulty(uint32 height) internal pure returns (bool){
         return height % DIFFICULTY_ADJUSTMENT_INTERVAL == 0;
     }
 
@@ -289,22 +289,22 @@ contract Relay is IRelay {
         return (nextTarget & expectedTarget) == nextTarget;
     }
 
-    function getBlockHeight(bytes32 digest) external view returns (uint64) {
+    function getBlockHeight(bytes32 digest) external view returns (uint32) {
         return _headers[digest].height;
     }
 
-    function getBlockHash(uint64 height) external view returns (bytes32) {
+    function getBlockHash(uint32 height) external view returns (bytes32) {
         bytes32 digest = _chain[height];
         require(digest > 0, ERR_BLOCK_NOT_FOUND);
         return digest;
     }
 
-    function getBestBlock() external view returns (bytes32 digest, uint64 height) {
+    function getBestBlock() external view returns (bytes32 digest, uint32 height) {
         return (_bestBlock, _bestHeight);
     }
 
     function verifyTx(
-        uint64 height,
+        uint32 height,
         uint256 index,
         bytes32 txid,
         bytes calldata header,

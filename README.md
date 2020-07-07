@@ -53,15 +53,15 @@ npm test
 
 | Function                 | Gas     | Description  |
 |--------------------------|---------|--------------|
-| `constructor`            | 1772513 | Genesis      |
-| `submitBlockHeader`      | 107385  | 1st Header   |
-| `submitBlockHeader`      | 107397  | 2nd Header   |
-| `submitBlockHeader`      | 107373  | 3rd Header   |
-| `submitBlockHeader`      | 107361  | 4th Header   |
-| `submitBlockHeader`      | 107385  | 5th Header   |
-| `submitBlockHeader`      | 107349  | 6th Header   |
-| `submitBlockHeaderBatch` | 477365  | Combined     |
-| `verifyTx`               | 62949   | Inclusion    |
+| `constructor`            | 1788129 | Genesis      |
+| `submitBlockHeader`      | 105789  | 1st Header   |
+| `submitBlockHeader`      | 105801  | 2nd Header   |
+| `submitBlockHeader`      | 105777  | 3rd Header   |
+| `submitBlockHeader`      | 105765  | 4th Header   |
+| `submitBlockHeader`      | 105789  | 5th Header   |
+| `submitBlockHeader`      | 105753  | 6th Header   |
+| `submitBlockHeaderBatch` | 467657  | Combined     |
+| `verifyTx`               | 62920   | Inclusion    |
 
 ### Ropsten
 
