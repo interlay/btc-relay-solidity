@@ -1,10 +1,9 @@
 {
   "name": "@interlay/btc-relay-sol",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "BTC Relay in Solidity",
   "dependencies": {
-    "@summa-tx/bitcoin-spv-sol": "3.0.0",
-    "bech32": "^1.1.4",
+    "@summa-tx/bitcoin-spv-sol": "3.1.0",
     "bitcoinjs-lib": "^5.1.7"
   },
   "devDependencies": {
@@ -40,6 +39,12 @@
     "type": "git",
     "url": "git+https://gitlab.com/interlay/btc-relay-sol.git"
   },
+  "keywords": [
+    "bitcoin",
+    "relay",
+    "ethereum",
+    "solidity"
+  ],
   "maintainers": [
     "Gregory Hill",
     "Alexei Zamyatin",
