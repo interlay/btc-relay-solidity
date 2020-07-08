@@ -47,10 +47,12 @@ Run the tests:
 yarn test
 ```
 
-Take gas measurements:
+Run with [eth-gas-reporter](https://github.com/cgewecke/eth-gas-reporter):
 
 ```bash
-npx buidler run scripts/metrics.ts
+export COINMARKETCAP_API_KEY=*****
+npx buidler node 
+yarn test --network localhost
 ```
 
 ## Deployments
@@ -60,6 +62,10 @@ yarn deploy
 ```
 
 ### Gas Costs
+
+```bash
+npx buidler run scripts/metrics.ts
+```
 
 | Function                 | Gas     | Description  |
 |--------------------------|---------|--------------|

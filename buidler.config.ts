@@ -1,17 +1,20 @@
-import { BuidlerConfig, usePlugin } from "@nomiclabs/buidler/config";
+import { usePlugin } from "@nomiclabs/buidler/config";
 
 usePlugin("@nomiclabs/buidler-ganache");
 usePlugin("@nomiclabs/buidler-waffle");
 usePlugin("buidler-typechain");
+usePlugin('buidler-gas-reporter');
 
 const INFURA_API_KEY = process.env.INFURA_API_KEY || '';
 const ROPSTEN_PRIVATE_KEY = process.env.ROPSTEN_PRIVATE_KEY || '';
 
-const config /*: BuidlerConfig*/ = {
+const COINMARKETCAP_API_KEY = process.env.COINMARKETCAP_API_KEY;
+
+const config = {
   defaultNetwork: "buidlerevm",
   solc: {
     version: "0.5.15",
-    optimizer: { enabled: true, runs: 200 }
+    optimizer: { enabled: true, runs: 500 }
   },
 	paths: {
 		sources: './src',
@@ -34,6 +37,12 @@ const config /*: BuidlerConfig*/ = {
         url: `https://ropsten.infura.io/v3/${INFURA_API_KEY}`,
         accounts: [ROPSTEN_PRIVATE_KEY]
       },
+  },
+  gasReporter: {
+    enabled: (COINMARKETCAP_API_KEY ? true : false),
+    coinmarketcap: COINMARKETCAP_API_KEY,
+    currency: "GBP",
+    src: "./src"
   },
 };
 
