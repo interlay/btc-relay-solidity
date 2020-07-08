@@ -29,10 +29,10 @@ contract TestRelay is Relay {
         bytes32 hashCurrBlock = header.hash256();
 
         // Fail if block already exists
-        require(!_headers[hashCurrBlock].exists, ERR_DUPLICATE_BLOCK);
+        require(_headers[hashCurrBlock].height == 0, ERR_DUPLICATE_BLOCK);
 
         // Fail if previous block hash not in current state of main chain
-        require(_headers[hashPrevBlock].exists, ERR_PREVIOUS_BLOCK);
+        require(_headers[hashPrevBlock].height > 0, ERR_PREVIOUS_BLOCK);
 
         uint256 target = header.extractTarget();
 

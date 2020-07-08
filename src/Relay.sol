@@ -12,9 +12,8 @@ contract Relay is IRelay {
     using BytesLib for bytes;
     using BTCUtils for bytes;
 
-    // TODO: optimize storage costs
     struct Header {
-        bool exists;
+        // cannot be zero:
         uint32 height; // height of this block header
         uint64 chainId; // identifier of chain fork
     }
@@ -57,6 +56,7 @@ contract Relay is IRelay {
     // EXCEPTION MESSAGES
     // OPTIMIZATION: limit string length to 32 bytes
     string constant ERR_INVALID_HEADER_SIZE = "Invalid block header size";
+    string constant ERR_INVALID_GENESIS_HEIGHT = "Invalid genesis height";
     string constant ERR_INVALID_HEADER_BATCH = "Invalid block header batch";
     string constant ERR_DUPLICATE_BLOCK = "Block already stored";
     string constant ERR_PREVIOUS_BLOCK = "Previous block hash not found";
@@ -79,6 +79,7 @@ contract Relay is IRelay {
         uint32 height
     ) public {
         require(header.length == 80, ERR_INVALID_HEADER_SIZE);
+        require(height > 0, ERR_INVALID_GENESIS_HEIGHT);
         bytes32 digest = header.hash256();
         uint256 target = header.extractTarget();
         uint64 timestamp = header.extractTimestamp();
@@ -109,10 +110,10 @@ contract Relay is IRelay {
         bytes32 hashCurrBlock = header.hash256();
 
         // Fail if block already exists
-        require(!_headers[hashCurrBlock].exists, ERR_DUPLICATE_BLOCK);
+        require(_headers[hashCurrBlock].height == 0, ERR_DUPLICATE_BLOCK);
 
         // Fail if previous block hash not in current state of main chain
-        require(_headers[hashPrevBlock].exists, ERR_PREVIOUS_BLOCK);
+        require(_headers[hashPrevBlock].height > 0, ERR_PREVIOUS_BLOCK);
 
         uint256 target = header.extractTarget();
 
@@ -202,7 +203,6 @@ contract Relay is IRelay {
         uint256 chainId
     ) internal {
         _chain[height] = digest;
-        _headers[digest].exists = true;
         _headers[digest].height = height;
         _headers[digest].chainId = uint64(chainId);
         emit StoreHeader(digest, height);

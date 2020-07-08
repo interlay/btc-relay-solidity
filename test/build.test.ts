@@ -13,7 +13,7 @@ describe("Build", () => {
         let signers = await ethers.signers();
         let contract = await DeployTestRelay(signers[0], {
             header: '0x' + block.toHex(true),
-            height: 0,
+            height: 1,
         });
         
         block = generate("bcrt1qu96jmjrfgpdynvqvljgszzm9vtzp7czquzcu6q", block.getHash());

@@ -58,11 +58,11 @@ describe("Proofs", () => {
   });
 
   it("should validate inclusion", async () => {
-    relay = await deployContract(<Wallet>signers[0], RelayArtifact, [genesisHeader, 0]) as Relay;
-    expect(await getBestBlockHeight(relay)).to.eq(0);
+    relay = await deployContract(<Wallet>signers[0], RelayArtifact, [genesisHeader, 1]) as Relay;
+    expect(await getBestBlockHeight(relay)).to.eq(1);
 
     // checks default stable confirmations
-    await relay.verifyTx(0, tx.index, tx.tx_id, genesisHeader, tx.intermediate_nodes, 0, true);
+    await relay.verifyTx(1, tx.index, tx.tx_id, genesisHeader, tx.intermediate_nodes, 0, true);
   });
 
   let testnet1 = {

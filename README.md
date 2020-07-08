@@ -69,15 +69,15 @@ npx buidler run scripts/metrics.ts
 
 | Function                 | Gas     | Description  |
 |--------------------------|---------|--------------|
-| `constructor`            | 1788129 | Genesis      |
-| `submitBlockHeader`      | 105789  | 1st Header   |
-| `submitBlockHeader`      | 105801  | 2nd Header   |
-| `submitBlockHeader`      | 105777  | 3rd Header   |
-| `submitBlockHeader`      | 105765  | 4th Header   |
-| `submitBlockHeader`      | 105789  | 5th Header   |
-| `submitBlockHeader`      | 105753  | 6th Header   |
-| `submitBlockHeaderBatch` | 467657  | Combined     |
-| `verifyTx`               | 62920   | Inclusion    |
+| `constructor`            | 1796743 | Genesis      |
+| `submitBlockHeader`      | 105299  | 1st Header   |
+| `submitBlockHeader`      | 105311  | 2nd Header   |
+| `submitBlockHeader`      | 105287  | 3rd Header   |
+| `submitBlockHeader`      | 105275  | 4th Header   |
+| `submitBlockHeader`      | 105299  | 5th Header   |
+| `submitBlockHeader`      | 105263  | 6th Header   |
+| `submitBlockHeaderBatch` | 464777  | Combined     |
+| `verifyTx`               | 62884   | Inclusion    |
 
 ### Ropsten
 
