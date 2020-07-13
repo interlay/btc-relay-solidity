@@ -1,9 +1,17 @@
 #!/bin/bash
 
-TXID=b7c1e5feb5a79d82b6502bf160e3787f0f4189a30ffc2f3a9ef641d0592ae7b1
+# https://github.com/Blockstream/esplora
 
-curl https://blockstream.info/testnet/api/tx/${TXID}/merkle-proof --output -
+## Transaction
 
-echo -e "\n"
+TXID=9f0370848f7bbf67908808997661a320af4f0075dce313e2934a576ed8204059
 
-curl https://blockstream.info/testnet/api/tx/${TXID}/hex --output -
+curl https://blockstream.info/api/tx/${TXID}/merkle-proof --output -
+curl https://blockstream.info/api/tx/${TXID}/hex --output -
+
+## Block
+
+HASH=00000000000000000021868c2cefc52a480d173c849412fe81c4e5ab806f94ab
+
+curl https://blockstream.info/api/block/${HASH} --output -
+curl https://blockstream.info/api/block/${HASH}/raw --output - | tac | tac | xxd -p | tr -d \\n | head -c 160

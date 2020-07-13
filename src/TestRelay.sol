@@ -14,14 +14,17 @@ contract TestRelay is Relay {
 
     /**
     * @notice Initializes the relay with the provided block.
-    * @param header - genesis block header
-    * @param height - genesis block height
+    * @param header Genesis block header
+    * @param height Genesis block height
     */
     constructor(
         bytes memory header,
         uint32 height
     ) public Relay(header, height) {}
 
+    /**
+     * @dev Override to remove the difficulty check
+     */
     function _submitBlockHeader(bytes memory header) internal {
         require(header.length == 80, ERR_INVALID_HEADER_SIZE);
 

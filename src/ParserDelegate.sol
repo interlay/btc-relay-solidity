@@ -8,33 +8,33 @@ contract ParserDelegate {
     using BytesLib for bytes;
     using Parser for bytes;
 
-    function extractInputLength(bytes memory _rawTx) public pure returns (uint numInputs, uint lenInputs) {
-        return _rawTx.extractInputLength();
+    function extractInputLength(bytes memory rawTx) public pure returns (uint numInputs, uint lenInputs) {
+        return rawTx.extractInputLength();
     }
 
-    function extractOutputLength(bytes memory _rawTx) public pure returns (uint numOutputs, uint lenOutputs) {
-        return _rawTx.extractOutputLength();
+    function extractOutputLength(bytes memory rawTx) public pure returns (uint numOutputs, uint lenOutputs) {
+        return rawTx.extractOutputLength();
     }
 
-    function extractNumOutputs(bytes memory _rawTx) public pure returns (uint) {
-        (, uint lenInputs) = _rawTx.extractInputLength();
-        bytes memory outputs = _rawTx.slice(lenInputs, _rawTx.length - lenInputs);
+    function extractNumOutputs(bytes memory rawTx) public pure returns (uint) {
+        (, uint lenInputs) = rawTx.extractInputLength();
+        bytes memory outputs = rawTx.slice(lenInputs, rawTx.length - lenInputs);
         (uint numOutputs, ) = outputs.extractOutputLength();
         return numOutputs;
     }
 
-    function extractOutputAtIndex(bytes memory _rawTx, uint256 _index) public pure returns (bytes memory) {
-        (, uint lenInputs) = _rawTx.extractInputLength();
-        return _rawTx.slice(lenInputs, _rawTx.length - lenInputs).extractOutputAtIndex(_index);
+    function extractOutputAtIndex(bytes memory rawTx, uint256 index) public pure returns (bytes memory) {
+        (, uint lenInputs) = rawTx.extractInputLength();
+        return rawTx.slice(lenInputs, rawTx.length - lenInputs).extractOutputAtIndex(index);
     }
 
-    function extractOutputValueAtIndex(bytes memory _rawTx, uint256 _index) public pure returns (uint256) {
-        bytes memory output = extractOutputAtIndex(_rawTx, _index);
+    function extractOutputValueAtIndex(bytes memory rawTx, uint256 index) public pure returns (uint256) {
+        bytes memory output = extractOutputAtIndex(rawTx, index);
         return output.extractOutputValue();
     }
 
-    function extractOutputScriptAtIndex(bytes memory _rawTx, uint256 _index) public pure returns (bytes memory) {
-        bytes memory output = extractOutputAtIndex(_rawTx, _index);
+    function extractOutputScriptAtIndex(bytes memory rawTx, uint256 index) public pure returns (bytes memory) {
+        bytes memory output = extractOutputAtIndex(rawTx, index);
         return output.extractOutputScript();
     }
 }

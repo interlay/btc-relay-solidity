@@ -15,29 +15,48 @@ interface IRelay {
     event ChainReorg(bytes32 indexed from, bytes32 indexed to, uint256 indexed id);
 
     /**
-    * @notice Parses, validates and stores Bitcoin block header1 to mapping
-    * @param header Raw Bitcoin block header bytes (80 bytes)
-    * @return bytes32 Bitcoin-like double sha256 hash of submitted block
+    * @notice Parses, validates and stores a block header
+    * @param header Raw block header bytes (80 bytes)
     */
     function submitBlockHeader(bytes calldata header) external;
 
+    /**
+    * @notice Parses, validates and stores a batch of headers
+    * @param headers Raw block headers (80* bytes)
+    */
     function submitBlockHeaderBatch(bytes calldata headers) external;
 
+    /**
+    * @notice Gets the height of an included block
+    * @param digest Hash of the referenced block
+    * @return Height of the stored block, reverts if not found
+    */
     function getBlockHeight(bytes32 digest) external view returns (uint32);
 
+    /**
+    * @notice Gets the hash of an included block
+    * @param height Height of the referenced block
+    * @return Hash of the stored block, reverts if not found
+    */
     function getBlockHash(uint32 height) external view returns (bytes32);
 
+    /**
+    * @notice Gets the hash and height for the best tip
+    * @return digest Hash of stored block
+    * @return height Height of stored block
+    */
     function getBestBlock() external view returns (bytes32 digest, uint32 height);
 
     /**
-    * @notice verifies that a transaction is included in a block
-    * @param height height of block that included transaction
-    * @param index index of transaction in the block's tx merkle tree
-    * @param txid transaction identifier
-    * @param proof merkle proof
-    * @param confirmations required confirmations (insecure)
-    * @param insecure check custom inclusion confirmations
-    * @return true if _txid is included, false otherwise
+    * @notice Verifies that a transaction is included in a block
+    * @param height Height of block that included transaction
+    * @param index Index of transaction in the block's tx merkle tree
+    * @param txid Transaction identifier (little endian)
+    * @param header Raw block header (80 bytes)
+    * @param proof Merkle proof
+    * @param confirmations Required confirmations (insecure)
+    * @param insecure Check custom inclusion confirmations
+    * @return True if txid is included, false otherwise
     */
     function verifyTx(
         uint32 height,

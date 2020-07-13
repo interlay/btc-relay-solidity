@@ -13,9 +13,10 @@ contract Relay is IRelay {
     using BTCUtils for bytes;
 
     struct Header {
-        // cannot be zero:
-        uint32 height; // height of this block header
-        uint64 chainId; // identifier of chain fork
+        // height of this block header (cannot be zero)
+        uint32 height;
+        // identifier of chain fork
+        uint64 chainId;
     }
 
     // mapping of block hashes to block headers (ALL ever submitted, i.e., incl. forks)
@@ -71,8 +72,8 @@ contract Relay is IRelay {
 
     /**
     * @notice Initializes the relay with the provided block.
-    * @param header - genesis block header
-    * @param height - genesis block height
+    * @param header Genesis block header
+    * @param height Genesis block height
     */
     constructor(
         bytes memory header,
@@ -103,6 +104,9 @@ contract Relay is IRelay {
         );
     }
 
+    /**
+     * @dev Core logic for block header validation
+     */
     function _submitBlockHeader(bytes memory header) internal {
         require(header.length == 80, ERR_INVALID_HEADER_SIZE);
 
@@ -123,7 +127,6 @@ contract Relay is IRelay {
         uint32 height = 1 + _headers[hashPrevBlock].height;
 
         // Check the specified difficulty target is correct
-
         uint64 timestamp = header.extractTimestamp();
         if (_shouldAdjustDifficulty(height)) {
             require(isCorrectDifficultyTarget(
@@ -184,10 +187,16 @@ contract Relay is IRelay {
         }
     }
 
+    /**
+     * @dev See {IRelay-submitBlockHeader}.
+     */
     function submitBlockHeader(bytes calldata header) external {
         _submitBlockHeader(header);
     }
 
+    /**
+     * @dev See {IRelay-submitBlockHeaderBatch}.
+     */
     function submitBlockHeaderBatch(bytes calldata headers) external {
         require(headers.length % 80 == 0, ERR_INVALID_HEADER_BATCH);
 
@@ -259,20 +268,30 @@ contract Relay is IRelay {
         _headers[_bestBlock].chainId = uint64(MAIN_CHAIN_ID);
     }
 
-    /*
-    * @notice checks if the difficulty target should be adjusted at this block height
-    * @param _height block height to be checked
-    * @return true, if block _height is at difficulty adjustment interval, otherwise false
-    */
+    /**
+     * @notice Checks if the difficulty target should be adjusted at this block height
+     * @param height Block height to be checked
+     * @return True if block height is at difficulty adjustment interval, otherwise false
+     */
     function _shouldAdjustDifficulty(uint32 height) internal pure returns (bool){
         return height % DIFFICULTY_ADJUSTMENT_INTERVAL == 0;
     }
 
+    /**
+     * @notice Validates difficulty interval
+     * @dev Reverts if previous period invalid
+     * @param prevStartTarget Period starting target
+     * @param prevStartTime Period starting timestamp
+     * @param prevEndTarget Period ending target
+     * @param prevEndTime Period ending timestamp
+     * @param nextTarget Next period starting target
+     * @return True if difficulty level is valid
+     */
     function isCorrectDifficultyTarget(
-        uint256 prevStartTarget,   // period starting target
-        uint64 prevStartTime,      // period starting timestamp
-        uint256 prevEndTarget,     // period ending target
-        uint64 prevEndTime,        // period ending timestamp
+        uint256 prevStartTarget,
+        uint64 prevStartTime,
+        uint256 prevEndTarget,
+        uint64 prevEndTime,
         uint256 nextTarget
     ) public pure returns (bool) {
         require(
@@ -289,20 +308,32 @@ contract Relay is IRelay {
         return (nextTarget & expectedTarget) == nextTarget;
     }
 
+    /**
+     * @dev See {IRelay-getBlockHeight}.
+     */
     function getBlockHeight(bytes32 digest) external view returns (uint32) {
         return _headers[digest].height;
     }
 
+    /**
+     * @dev See {IRelay-getBlockHash}.
+     */
     function getBlockHash(uint32 height) external view returns (bytes32) {
         bytes32 digest = _chain[height];
         require(digest > 0, ERR_BLOCK_NOT_FOUND);
         return digest;
     }
 
+    /**
+     * @dev See {IRelay-getBestBlock}.
+     */
     function getBestBlock() external view returns (bytes32 digest, uint32 height) {
         return (_bestBlock, _bestHeight);
     }
 
+    /**
+     * @dev See {IRelay-verifyTx}.
+     */
     function verifyTx(
         uint32 height,
         uint256 index,
@@ -312,6 +343,7 @@ contract Relay is IRelay {
         uint256 confirmations,
         bool insecure
     ) external view returns (bool) {
+        // txid must be little endian
         require(txid != 0, ERR_INVALID_TXID);
 
         if (insecure) {

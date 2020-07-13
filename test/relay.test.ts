@@ -1,13 +1,19 @@
 import { ethers } from "@nomiclabs/buidler";
-import { Signer, Wallet } from "ethers";
+import { Signer } from "ethers";
 import chai from "chai";
-import { deployContract, solidity } from "ethereum-waffle";
-import RelayArtifact from "../artifacts/Relay.json";
+import { solidity } from "ethereum-waffle";
 import { Relay } from "../typechain/Relay"
 import { ErrorCode } from './constants';
+import { RelayFactory } from "../typechain/RelayFactory";
+import { Arrayish } from "ethers/utils";
 
 chai.use(solidity);
 const { expect } = chai;
+
+function deploy(signer: Signer, header: Arrayish, height: number) {
+  const factory = new RelayFactory(signer);
+  return factory.deploy(header, height);
+}
 
 describe("Relay", () => {
   let signers: Signer[];
@@ -19,8 +25,7 @@ describe("Relay", () => {
 
   beforeEach(async () => {
     signers = await ethers.signers();
-    relay = await deployContract(<Wallet>signers[0], RelayArtifact, [genesisHeader, genesisHeight]) as Relay;
-    // console.log((await relay.deployTransaction.wait(1)).gasUsed?.toNumber())
+    relay = await deploy(signers[0], genesisHeader, genesisHeight);
   });
 
   it("should store genesis header", async () => {
