@@ -176,18 +176,18 @@ describe("Proofs", () => {
       "5660db59d56bbb416773d474bdd472ddea40c96b09a9e32b24017e59ab50e4f0",
       "f8d7a8087256bae032c4576046b13af00033c2f335a55619e4b4e27a17cd8472"
     ],
-    header: "0x00000020a1d2b3b757ad55fa1c670f9f59372a2a26f1a85197711e00000000000000000070be58da7ef0a754ef5947910fa1bb0c19160d641cf212ae46ba53e0327233bc2367905b2dd729174c3ae2db",
-    headerHash: "0x00000000000000000021868c2cefc52a480d173c849412fe81c4e5ab806f94ab",
+    header: "00000020a1d2b3b757ad55fa1c670f9f59372a2a26f1a85197711e00000000000000000070be58da7ef0a754ef5947910fa1bb0c19160d641cf212ae46ba53e0327233bc2367905b2dd729174c3ae2db",
+    headerHash: "00000000000000000021868c2cefc52a480d173c849412fe81c4e5ab806f94ab",
     height: 540107,
   };
 
   it("should validate inclusion - large block (mainnet1)", async () => {
-    relay = await deploy(signers[0], mainnet1.header, mainnet1.height);
+    relay = await deploy(signers[0], "0x" + mainnet1.header, mainnet1.height);
     expect(await getBestBlockHeight(relay)).to.eq(mainnet1.height);
 
     let proof = mainnet1.intermediateNodes.map((value) => Buffer.from(value, 'hex').reverse().toString('hex')).join("");
     let txid = Buffer.from(mainnet1.txId, 'hex').reverse().toString('hex');
 
-    await relay.verifyTx(mainnet1.height, mainnet1.index, "0x" + txid, mainnet1.header, "0x" + proof, 0, true);
+    await relay.verifyTx(mainnet1.height, mainnet1.index, "0x" + txid, "0x" + mainnet1.header, "0x" + proof, 0, true);
   });
 });

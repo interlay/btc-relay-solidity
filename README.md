@@ -21,7 +21,7 @@ The underlying technical design and functionality is comparable to that of SPV-C
 
 Read more about chain relays in the <a href="https://eprint.iacr.org/2018/643.pdf">XCLAIM paper</a> (Section V.B descibes the basic concept of chain relays, while Appendix B provides a formal model of the required functionality for PoW chain relays.).  
 
-### BTC-Relay-Sol
+### Architecture
 This project is an implementation of a chain relay for Bitcoin on Ethereum. The first implementation of a BTC relay was implemented in Serpent and can be found <a href="https://github.com/ethereum/btcrelay">here</a>. 
 However, as Serpent is outdated (last commit: December 2017), this project aims to implement an updated version in Solidity. 
 
@@ -55,13 +55,7 @@ npx buidler node
 yarn test --network localhost
 ```
 
-## Deployments
-
-```bash
-yarn deploy
-```
-
-### Gas Costs
+## Gas Costs
 
 ```bash
 npx buidler run scripts/metrics.ts
@@ -78,6 +72,35 @@ npx buidler run scripts/metrics.ts
 | `submitBlockHeader`      | 105263  | 6th Header   |
 | `submitBlockHeaderBatch` | 464777  | Combined     |
 | `verifyTx`               | 62884   | Inclusion    |
+
+### Summa Relay
+
+[Summa](https://github.com/summa-tx/relays) have also developed a Bitcoin relay in Solidity.
+There are a number of differences between the two approaches however. As summarized in the table
+below, their block submission is significantly cheaper compared to ours. This is primarily due to
+their more restrictive use of storage and separation of functionality - block submission, difficulty adjustment
+and fork selection are all separate calls. However, checking transaction inclusion is slightly more involved
+as the implementation needs to recurse backwards through all ancestors.
+
+| Interlay | Summa   | Purpose   | Description                  |
+|----------|---------|-----------|------------------------------|
+| 616782   | 403903  | Submit    | 8 Block Headers              |
+| 2397012  | 1520844 | Submit    | 32 Block Headers             |
+| 30462    | 32731   | Inclusion | Coinbase - Tx Depth 1        |
+| 67240    | 69510   | Inclusion | Heavy (230 Txs) - Tx Depth 1 |
+| 67326    | 79540   | Inclusion | Tx Depth 6                   |
+| 67326    | 102364  | Inclusion | Tx Depth 32                  |
+
+There are two primary motivations for our higher cost in block submission:
+
+1. The relay should be self-healing, requiring minimal user intervention.
+2. Constant time lookup - given a height we should be able to instantly verify inclusion.
+
+## Deployments
+
+```bash
+yarn deploy
+```
 
 ### Ropsten
 

@@ -110,13 +110,12 @@ contract Relay is IRelay {
     function _submitBlockHeader(bytes memory header) internal {
         require(header.length == 80, ERR_INVALID_HEADER_SIZE);
 
-        bytes32 hashPrevBlock = header.extractPrevBlockLE().toBytes32();
-        bytes32 hashCurrBlock = header.hash256();
-
         // Fail if block already exists
+        bytes32 hashCurrBlock = header.hash256();
         require(_headers[hashCurrBlock].height == 0, ERR_DUPLICATE_BLOCK);
 
         // Fail if previous block hash not in current state of main chain
+        bytes32 hashPrevBlock = header.extractPrevBlockLE().toBytes32();
         require(_headers[hashPrevBlock].height > 0, ERR_PREVIOUS_BLOCK);
 
         uint256 target = header.extractTarget();
@@ -127,8 +126,7 @@ contract Relay is IRelay {
         uint32 height = 1 + _headers[hashPrevBlock].height;
 
         // Check the specified difficulty target is correct
-        uint64 timestamp = header.extractTimestamp();
-        if (_shouldAdjustDifficulty(height)) {
+        if (_isPeriodStart(height)) {
             require(isCorrectDifficultyTarget(
                 _epochStartTarget,
                 _epochStartTime,
@@ -138,13 +136,14 @@ contract Relay is IRelay {
             ), ERR_DIFF_TARGET_HEADER);
 
             _epochStartTarget = target;
-            _epochStartTime = timestamp;
-        } else {
-            // if(nextTarget != prevEndTarget && prevEndTarget != 0) {
-            //     return (false, false);
-            // }
+            _epochStartTime = header.extractTimestamp();
+
+            delete _epochEndTarget;
+            delete _epochEndTime;
+        } else if (_isPeriodEnd(height)) {
+            // only update if end to save gas
             _epochEndTarget = target;
-            _epochEndTime = timestamp;
+            _epochEndTime = header.extractTimestamp();
         }
 
         uint256 chainId = _headers[hashPrevBlock].chainId;
@@ -273,8 +272,12 @@ contract Relay is IRelay {
      * @param height Block height to be checked
      * @return True if block height is at difficulty adjustment interval, otherwise false
      */
-    function _shouldAdjustDifficulty(uint32 height) internal pure returns (bool){
+    function _isPeriodStart(uint32 height) internal pure returns (bool){
         return height % DIFFICULTY_ADJUSTMENT_INTERVAL == 0;
+    }
+
+    function _isPeriodEnd(uint32 height) internal pure returns (bool){
+        return height % DIFFICULTY_ADJUSTMENT_INTERVAL == 2015;
     }
 
     /**
