@@ -1,6 +1,6 @@
 import { ethers } from "@nomiclabs/buidler";
 import { Contract } from 'ethers';
-import { Genesis, DeployTestRelay } from "./contracts";
+import { Genesis, DeployTestRelay, Call } from "./contracts";
 import { TestRelay } from "../typechain/TestRelay";
 
 const testnet: Genesis = {
@@ -53,12 +53,12 @@ async function main(genesis: Genesis) {
   await submitHeader(contract, header5);
   await submitHeader(contract, header6);
 
-  let call = contract.interface.functions.verifyTx.encode([tx.height, tx.index, tx.tx_id, tx.header, tx.proof, 0, false])
-  let response = await signers[0].sendTransaction({
-    to: contract.address,
-    data: call,
-  });
-  receipt = await response.wait(0);
+  receipt = await Call(
+    signers[0],
+    contract,
+    contract.interface.functions.verifyTx,
+    [tx.height, tx.index, tx.tx_id, tx.header, tx.proof, 0, false]
+  );
   console.log(`Gas [Verify]: ${receipt.gasUsed?.toString()}`);
 }
 
