@@ -1,9 +1,11 @@
-pragma solidity ^0.5.15;
+// SPDX-License-Identifier: MIT
 
-import {SafeMath} from "@summa-tx/bitcoin-spv-sol/contracts/SafeMath.sol";
-import {BytesLib} from "@summa-tx/bitcoin-spv-sol/contracts/BytesLib.sol";
-import {BTCUtils} from "@summa-tx/bitcoin-spv-sol/contracts/BTCUtils.sol";
-import {ValidateSPV} from "@summa-tx/bitcoin-spv-sol/contracts/ValidateSPV.sol";
+pragma solidity ^0.6.12;
+
+import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+import {BytesLib} from "@interlay/bitcoin-spv-sol/contracts/BytesLib.sol";
+import {BTCUtils} from "@interlay/bitcoin-spv-sol/contracts/BTCUtils.sol";
+import {ValidateSPV} from "@interlay/bitcoin-spv-sol/contracts/ValidateSPV.sol";
 import {IRelay} from "./IRelay.sol";
 
 /// @title BTC Relay
@@ -107,7 +109,7 @@ contract Relay is IRelay {
     /**
      * @dev Core logic for block header validation
      */
-    function _submitBlockHeader(bytes memory header) internal {
+    function _submitBlockHeader(bytes memory header) internal virtual {
         require(header.length == 80, ERR_INVALID_HEADER_SIZE);
 
         // Fail if block already exists
@@ -189,14 +191,14 @@ contract Relay is IRelay {
     /**
      * @dev See {IRelay-submitBlockHeader}.
      */
-    function submitBlockHeader(bytes calldata header) external {
+    function submitBlockHeader(bytes calldata header) external override {
         _submitBlockHeader(header);
     }
 
     /**
      * @dev See {IRelay-submitBlockHeaderBatch}.
      */
-    function submitBlockHeaderBatch(bytes calldata headers) external {
+    function submitBlockHeaderBatch(bytes calldata headers) external override {
         require(headers.length % 80 == 0, ERR_INVALID_HEADER_BATCH);
 
         for (uint256 i = 0; i < headers.length / 80; i = i.add(1)) {
@@ -314,14 +316,14 @@ contract Relay is IRelay {
     /**
      * @dev See {IRelay-getBlockHeight}.
      */
-    function getBlockHeight(bytes32 digest) external view returns (uint32) {
+    function getBlockHeight(bytes32 digest) external view override returns (uint32) {
         return _headers[digest].height;
     }
 
     /**
      * @dev See {IRelay-getBlockHash}.
      */
-    function getBlockHash(uint32 height) external view returns (bytes32) {
+    function getBlockHash(uint32 height) external view override returns (bytes32) {
         bytes32 digest = _chain[height];
         require(digest > 0, ERR_BLOCK_NOT_FOUND);
         return digest;
@@ -330,7 +332,7 @@ contract Relay is IRelay {
     /**
      * @dev See {IRelay-getBestBlock}.
      */
-    function getBestBlock() external view returns (bytes32 digest, uint32 height) {
+    function getBestBlock() external view override returns (bytes32 digest, uint32 height) {
         return (_bestBlock, _bestHeight);
     }
 
@@ -345,7 +347,7 @@ contract Relay is IRelay {
         bytes calldata proof,
         uint256 confirmations,
         bool insecure
-    ) external view returns (bool) {
+    ) external view override returns (bool) {
         // txid must be little endian
         require(txid != 0, ERR_INVALID_TXID);
 

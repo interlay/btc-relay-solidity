@@ -1,7 +1,9 @@
-pragma solidity ^0.5.15;
+// SPDX-License-Identifier: MIT
 
-import {BytesLib} from "@summa-tx/bitcoin-spv-sol/contracts/BytesLib.sol";
-import {BTCUtils} from "@summa-tx/bitcoin-spv-sol/contracts/BTCUtils.sol";
+pragma solidity ^0.6.12;
+
+import {BytesLib} from "@interlay/bitcoin-spv-sol/contracts/BytesLib.sol";
+import {BTCUtils} from "@interlay/bitcoin-spv-sol/contracts/BTCUtils.sol";
 
 library Script {
     using BytesLib for bytes;

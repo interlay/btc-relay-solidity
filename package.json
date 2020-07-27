@@ -1,9 +1,10 @@
 {
   "name": "@interlay/btc-relay-sol",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "BTC Relay in Solidity",
   "dependencies": {
-    "@summa-tx/bitcoin-spv-sol": "3.1.0",
+    "@interlay/bitcoin-spv-sol": "3.2.1",
+    "@openzeppelin/contracts": "3.1.0",
     "bitcoinjs-lib": "^5.1.7"
   },
   "devDependencies": {

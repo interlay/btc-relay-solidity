@@ -1,9 +1,11 @@
-pragma solidity ^0.5.15;
+// SPDX-License-Identifier: MIT
 
-import {SafeMath} from "@summa-tx/bitcoin-spv-sol/contracts/SafeMath.sol";
-import {BytesLib} from "@summa-tx/bitcoin-spv-sol/contracts/BytesLib.sol";
-import {BTCUtils} from "@summa-tx/bitcoin-spv-sol/contracts/BTCUtils.sol";
-import {ValidateSPV} from "@summa-tx/bitcoin-spv-sol/contracts/ValidateSPV.sol";
+pragma solidity ^0.6.12;
+
+import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+import {BytesLib} from "@interlay/bitcoin-spv-sol/contracts/BytesLib.sol";
+import {BTCUtils} from "@interlay/bitcoin-spv-sol/contracts/BTCUtils.sol";
+import {ValidateSPV} from "@interlay/bitcoin-spv-sol/contracts/ValidateSPV.sol";
 import {Relay} from "./Relay.sol";
 
 /// @title Testnet BTC Relay
@@ -25,7 +27,7 @@ contract TestRelay is Relay {
     /**
      * @dev Override to remove the difficulty check
      */
-    function _submitBlockHeader(bytes memory header) internal {
+    function _submitBlockHeader(bytes memory header) internal override {
         require(header.length == 80, ERR_INVALID_HEADER_SIZE);
 
         bytes32 hashPrevBlock = header.extractPrevBlockLE().toBytes32();
