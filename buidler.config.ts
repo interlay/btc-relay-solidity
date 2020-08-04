@@ -13,11 +13,11 @@ const COINMARKETCAP_API_KEY = process.env.COINMARKETCAP_API_KEY;
 const config = {
   defaultNetwork: "buidlerevm",
   solc: {
-    version: "0.6.12",
+    version: "0.6.6",
     optimizer: { enabled: true, runs: 500 }
   },
 	paths: {
-		sources: './src',
+		sources: './contracts',
 		tests: './test',
 	},
 	typechain: {
@@ -42,7 +42,7 @@ const config = {
     enabled: (COINMARKETCAP_API_KEY ? true : false),
     coinmarketcap: COINMARKETCAP_API_KEY,
     currency: "GBP",
-    src: "./src"
+    src: "./contracts"
   },
 };
 
