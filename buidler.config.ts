@@ -17,7 +17,7 @@ const config = {
     optimizer: { enabled: true, runs: 500 }
   },
 	paths: {
-		sources: './src',
+		sources: './contracts',
 		tests: './test',
 	},
 	typechain: {
@@ -42,7 +42,7 @@ const config = {
     enabled: (COINMARKETCAP_API_KEY ? true : false),
     coinmarketcap: COINMARKETCAP_API_KEY,
     currency: "GBP",
-    src: "./src"
+    src: "./contracts"
   },
 };
 
