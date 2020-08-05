@@ -41,6 +41,20 @@ describe("Parser", () => {
     let result = await parser.extractOutputValueAtIndex(rawTx2, 0);
     expect(result.toNumber()).to.eq(btcToSat(0.2));
   });
+
+  // d9c9213136854a53211f1c80d202b743dfe971867558fd2c5628fe781a7f7ba9
+  const p2pkhTx = "0x0200000001f76fec5260faa8f39fbd8f17f5acb2bd50260fa715347201657fceaefc14a102" +
+                  "000000006a47304402203f09be3d47d77f6a0948023aa80dc849128ce5a9cb017ed3c2413abb" +
+                  "74accf9c022019da8fed912a6b5b01aa6088fee3bdeb0d237d37072e29fb7b238932bf140cd0" +
+                  "012103785122f4493e03a7082398099e8f159a293ba496344c1c9b673074b1318ee336feffff" +
+                  "ff02acfad806000000001976a914679775af720fa9bf3602150ee699ad7e2a24d96888ac4e90" +
+                  "b76e200000001976a914e5ea7e9aae7df252796864912f0df41b4b956f4488ace3c01300";
+
+  it("should successfully extract p2pkh output", async () => { 
+    let result = await parser.extractOutputValueAtIndex(p2pkhTx, 1);
+    expect(result.toNumber()).to.eq(139296477262);
+  });
+
 });
 
 function btcToSat(btc: number) {

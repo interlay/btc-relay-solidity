@@ -1,6 +1,6 @@
 {
   "name": "@interlay/btc-relay-sol",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "BTC Relay in Solidity",
   "dependencies": {
     "@interlay/bitcoin-spv-sol": "3.2.2",

@@ -121,7 +121,7 @@ library Parser {
             pos = pos + pkScriptVarIntLen;
             pos = pos + pkScriptLen;
             if (i == index) {
-                return outputs.slice(start, pos);
+                return outputs.slice(start, pos.sub(start));
             }
             start = pos;
         }
