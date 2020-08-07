@@ -5,9 +5,15 @@
       "strict": true,
       "esModuleInterop": true,
       "outDir": "dist",
+      "declaration": true,
       "resolveJsonModule": true
     },
-    "include": ["./scripts", "./test"],
+    "include": [
+      "typechain",
+      "scripts",
+      "test",
+      "index.ts"
+      ],
     "files": [
       "./buidler.config.ts",
       "node_modules/@nomiclabs/buidler-ethers/src/type-extensions.d.ts",

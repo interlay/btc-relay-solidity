@@ -1,11 +1,14 @@
 {
   "name": "@interlay/btc-relay-sol",
-  "version": "0.3.4",
+  "version": "0.3.8",
   "description": "BTC Relay in Solidity",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "dependencies": {
     "@interlay/bitcoin-spv-sol": "3.2.2",
     "@openzeppelin/contracts": "3.1.0",
-    "bitcoinjs-lib": "^5.1.7"
+    "bitcoinjs-lib": "^5.1.7",
+    "ethers": "^4.0.44"
   },
   "files": [
     "contracts",
@@ -23,7 +26,6 @@
     "buidler-typechain": "0.0.5",
     "chai": "^4.2.0",
     "ethereum-waffle": "^2.3.2",
-    "ethers": "^4.0.44",
     "solidity-coverage": "^0.7.1",
     "ts-generator": "0.0.8",
     "ts-node": "^8.6.2",
@@ -40,7 +42,8 @@
     "test": "npx buidler test",
     "deploy": "npx buidler run scripts/deploy.ts",
     "ganache": "npx buidler run scripts/ganache.ts",
-    "clean": "npx buidler clean"
+    "tsc": "tsc && cp typechain/*.d.ts dist/typechain/",
+    "clean": "npx buidler clean && rm -rf dist"
   },
   "repository": {
     "type": "git",
