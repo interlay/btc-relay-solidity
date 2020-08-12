@@ -1,6 +1,6 @@
 {
   "name": "@interlay/btc-relay-sol",
-  "version": "0.3.8",
+  "version": "0.3.9",
   "description": "BTC Relay in Solidity",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -23,9 +23,19 @@
     "@types/chai": "^4.2.8",
     "@types/mocha": "^7.0.1",
     "@types/node": "^13.7.0",
+    "@typescript-eslint/eslint-plugin": "^2.21.0",
+    "@typescript-eslint/parser": "^2.21.0",
     "buidler-typechain": "0.0.5",
     "chai": "^4.2.0",
+    "eslint": "^6.8.0",
+    "eslint-config-prettier": "^6.10.0",
+    "eslint-plugin-prettier": "^3.1.2",
     "ethereum-waffle": "^2.3.2",
+    "husky": "^4.2.5",
+    "prettier": "^2.0.5",
+    "prettier-plugin-solidity": "^1.0.0-alpha.56",
+    "solhint": "^3.1.0",
+    "solhint-plugin-prettier": "^0.0.4",
     "solidity-coverage": "^0.7.1",
     "ts-generator": "0.0.8",
     "ts-node": "^8.6.2",
@@ -37,13 +47,24 @@
     "typescript": "^3.7.5"
   },
   "scripts": {
-    "build": "npm run compile && npx buidler typechain",
-    "compile": "npx buidler compile",
-    "test": "npx buidler test",
-    "deploy": "npx buidler run scripts/deploy.ts",
-    "ganache": "npx buidler run scripts/ganache.ts",
+    "build": "yarn run compile && buidler typechain",
+    "compile": "buidler compile",
+    "test": "buidler test",
+    "deploy": "buidler run scripts/deploy.ts",
+    "ganache": "buidler run scripts/ganache.ts",
     "tsc": "tsc && cp typechain/*.d.ts dist/typechain/",
-    "clean": "npx buidler clean && rm -rf dist"
+    "clean": "buidler clean && rm -rf dist",
+    "lint::typescript": "eslint './**/*.ts' --ext .ts",
+    "prettier::typescript": "prettier --write './**/*.ts'",
+    "lint::solidity": "solhint 'contracts/**/*.sol'",
+    "prettier::solidity": "prettier --write 'contracts/**/*.sol'",
+    "lint": "yarn run lint::typescript && yarn run lint::solidity",
+    "prettier": "yarn run prettier::typescript && yarn run prettier::solidity"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "yarn run prettier"
+    }
   },
   "repository": {
     "type": "git",

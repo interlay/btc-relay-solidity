@@ -5,6 +5,7 @@ contracts:
   stage: test
   image: node:13
   script:
-  - npm install
-  - npm run build
-  - npm run test
+    - yarn install
+    - yarn build
+    - yarn lint
+    - yarn test
