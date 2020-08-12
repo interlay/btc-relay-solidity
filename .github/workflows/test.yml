@@ -1,0 +1,22 @@
+name: test
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: setup node
+      uses: actions/setup-node@v1
+      with:
+        node-version: '14.x'
+    - run: yarn install
+    - run: yarn build
+    - run: yarn lint
+    - run: yarn test
+    - run: yarn test-js
