@@ -2,7 +2,7 @@
 
 pragma solidity ^0.6.0;
 
-import {Script} from "./Script.sol";
+import {Script} from './Script.sol';
 
 contract ScriptDelegate {
     using Script for bytes;
@@ -11,6 +11,7 @@ contract ScriptDelegate {
         return script.isP2PKH();
     }
 
+    // solhint-disable-next-line func-name-mixedcase
     function P2PKH(bytes memory script) public pure returns (bytes20) {
         return script.P2PKH();
     }
@@ -19,7 +20,12 @@ contract ScriptDelegate {
         return script.isP2WPKH();
     }
 
-    function P2WPKH(bytes memory script) public pure returns (bytes1 version, bytes20 program) {
+    // solhint-disable-next-line func-name-mixedcase
+    function P2WPKH(bytes memory script)
+        public
+        pure
+        returns (bytes1 version, bytes20 program)
+    {
         return script.P2WPKH();
     }
 
@@ -27,11 +33,16 @@ contract ScriptDelegate {
         return script.isP2SH();
     }
 
+    // solhint-disable-next-line func-name-mixedcase
     function P2SH(bytes memory script) public pure returns (bytes20) {
         return script.P2SH();
     }
 
-    function isCLTV(bytes memory script) public pure returns (uint time, bytes memory addr) {
+    function isCLTV(bytes memory script)
+        public
+        pure
+        returns (uint256 time, bytes memory addr)
+    {
         return script.isCLTV();
     }
 }

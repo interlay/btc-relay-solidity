@@ -1,20 +1,26 @@
-import config from "../buidler.config";
-import  * as child from "child_process";
+/* eslint-disable no-console */
 
-var ganache_cmd = "ganache-cli -d";
-var port = "-p 8545";
-var mnemonic = "-m ".concat(config.networks.ganache.mnemonic);
-var id = "-i ".concat(config.networks.ganache.network_id.toString());
+import config from '../buidler.config';
+import * as child from 'child_process';
 
-console.log(ganache_cmd.concat(" ", port, " ", mnemonic, " ", id));
+const ganacheCmd = 'ganache-cli -d';
+const port = '-p 8545';
+const mnemonic = '-m '.concat(config.networks.ganache.mnemonic);
+const id = '-i '.concat(config.networks.ganache.networkId.toString());
 
-var ganache: child.ChildProcess = child.spawn("ganache-cli", [port, mnemonic, id]);
+console.log(ganacheCmd.concat(' ', port, ' ', mnemonic, ' ', id));
+
+const ganache: child.ChildProcess = child.spawn('ganache-cli', [
+  port,
+  mnemonic,
+  id
+]);
 
 ganache.stdout!.on('data', (data) => {
-    console.log(data.toString());
+  console.log(data.toString());
 });
 ganache.stderr!.on('data', (data) => {
-    console.log(data.toString());
+  console.log(data.toString());
 });
 ganache.on('close', (code) => {
   console.log(`child process exited with code ${code}`);

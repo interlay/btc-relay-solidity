@@ -1,6 +1,10 @@
 {
-  "eslint.enable": true,
-  "files.exclude": {
-    "truffle/": true
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "[solidity]": {
+    "editor.defaultFormatter": "JuanBlanco.solidity",
+    "editor.formatOnSave": true
   }
 }
