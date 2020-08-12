@@ -2,9 +2,9 @@ name: test
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
 
 jobs:
   build:
@@ -19,4 +19,3 @@ jobs:
     - run: yarn build
     - run: yarn lint
     - run: yarn test
-    - run: yarn test-js
