@@ -85,4 +85,19 @@ describe('Scripts', () => {
       'tb1q2krsjrpj3z6xm7xvj2xxjy9gcxa755y0exegh6'
     );
   });
+
+  it('should accept op_return', async () => {
+    const result = await parser.isOpReturn(
+      '0x6a200000000000000000000000000000000000000000000000000000000000000000'
+    );
+    expect(result).to.be.true;
+
+    const data = await parser.OpReturn(
+      '0x6a200000000000000000000000000000000000000000000000000000000000000000'
+    );
+
+    expect(data).to.eq(
+      '0x0000000000000000000000000000000000000000000000000000000000000000'
+    );
+  });
 });

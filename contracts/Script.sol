@@ -17,6 +17,7 @@ library Script {
     bytes1 internal constant OP_CHECKLOCKTIMEVERIFY = 0xb1;
     bytes1 internal constant OP_DROP = 0x75;
     bytes1 internal constant OP_0 = 0x00;
+    bytes1 internal constant OP_RETURN = 0x6a;
 
     // EXCEPTION MESSAGES
     string internal constant ERR_INVALID_SIZE = 'Invalid size';
@@ -63,6 +64,19 @@ library Script {
     // solhint-disable-next-line func-name-mixedcase
     function P2SH(bytes memory script) internal pure returns (bytes20) {
         return toBytes20(script.slice(2, 20));
+    }
+
+    function isOpReturn(bytes memory script) internal pure returns (bool) {
+        return script[0] == OP_RETURN;
+    }
+
+    function OpReturn(bytes memory script)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        bytes memory output = script.slice(1, script.length - 1);
+        return output.slice(1, uint8(output[0]));
     }
 
     // 04 9f7b2a5c b1 75 76 a9 14 371c20fb2e9899338ce5e99908e64fd30b789313 88 ac

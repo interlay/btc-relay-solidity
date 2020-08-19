@@ -65,4 +65,18 @@ describe('Parser', () => {
     const result = await parser.extractOutputValueAtIndex(p2pkhTx, 1);
     expect(result.toNumber()).to.eq(139296477262);
   });
+
+  const p2wpkhTx =
+    '0x01000000000101747c038ceb0a5ab9edd61d39f3d3c611cd52ccd0f519d9ad93ccf1f81a0f' +
+    'c5d30100000000ffffffff026400000000000000160014867a55207369ad0fe47cf3cfd2ecba' +
+    'ef2446c8b40000000000000000226a2000000000000000000000000000000000000000000000' +
+    '0000000000000000000002473044022049a2913d41700d3076cec041d1d0906fe59c6d384c4a' +
+    'c4e67dc2b9bdc121f300022045a0c6edb241c39b2578bc9c2cb60e60821f18e273da799010bc' +
+    'c2a47c3d7e4e01210290465bd783baaa9d52df3b57e31cef7df72c0cbd10afe6a10e3cfbd947' +
+    '7c8acf00000000';
+
+  it('should successfully extract p2wpkh output', async () => {
+    const result = await parser.extractOutputScriptAtIndex(p2wpkhTx, 1);
+    console.log(result);
+  });
 });

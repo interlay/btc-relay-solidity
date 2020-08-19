@@ -38,6 +38,14 @@ contract ScriptDelegate {
         return script.P2SH();
     }
 
+    function isOpReturn(bytes memory script) public pure returns (bool) {
+        return script.isOpReturn();
+    }
+
+    function OpReturn(bytes memory script) public pure returns (bytes memory) {
+        return script.OpReturn();
+    }
+
     function isCLTV(bytes memory script)
         public
         pure
