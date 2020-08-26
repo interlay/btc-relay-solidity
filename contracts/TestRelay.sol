@@ -29,7 +29,10 @@ contract TestRelay is Relay {
     /**
      * @dev Override to remove the difficulty check
      */
-    function _submitBlockHeader(bytes memory header) internal override {
+    function _submitBlockHeader(address payable author, bytes memory header)
+        internal
+        override
+    {
         require(header.length == 80, ERR_INVALID_HEADER_SIZE);
 
         bytes32 hashPrevBlock = header.extractPrevBlockLE().toBytes32();
@@ -62,9 +65,9 @@ contract TestRelay is Relay {
             chainId = _incrementChainCounter();
             _initializeFork(hashCurrBlock, hashPrevBlock, chainId, height);
 
-            _storeBlockHeader(hashCurrBlock, height, chainId);
+            _storeBlockHeader(author, hashCurrBlock, height, chainId);
         } else {
-            _storeBlockHeader(hashCurrBlock, height, chainId);
+            _storeBlockHeader(author, hashCurrBlock, height, chainId);
 
             if (chainId == MAIN_CHAIN_ID) {
                 _bestBlock = hashCurrBlock;

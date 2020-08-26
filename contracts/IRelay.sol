@@ -65,7 +65,6 @@ interface IRelay {
      * @param proof Merkle proof
      * @param confirmations Required confirmations (insecure)
      * @param insecure Check custom inclusion confirmations
-     * @return True if txid is included, false otherwise
      */
     function verifyTx(
         uint32 height,
@@ -75,5 +74,5 @@ interface IRelay {
         bytes calldata proof,
         uint256 confirmations,
         bool insecure
-    ) external view returns (bool);
+    ) external payable;
 }
