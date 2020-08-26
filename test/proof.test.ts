@@ -15,6 +15,8 @@ async function getBestBlockHeight(relay: Relay): Promise<number> {
   return height;
 }
 
+const verifyCostWei = 106000;
+
 function deploy(
   signer: Signer,
   header: Arrayish,
@@ -107,7 +109,8 @@ describe('Proofs', () => {
       genesisHeader,
       tx.intermediateNodes,
       0,
-      true
+      true,
+      {value: verifyCostWei}
     );
   });
 
@@ -124,7 +127,9 @@ describe('Proofs', () => {
       'hex'
     ).reverse();
 
-    await relay.verifyTx(height, 0, txId, header, [], 0, true);
+    await relay.verifyTx(height, 0, txId, header, [], 0, true, {
+      value: verifyCostWei
+    });
   });
 
   const testnet1 = {
@@ -162,7 +167,8 @@ describe('Proofs', () => {
       testnet1.header,
       '0x' + proof,
       0,
-      true
+      true,
+      {value: verifyCostWei}
     );
   });
 
@@ -201,7 +207,8 @@ describe('Proofs', () => {
       testnet2.header,
       '0x' + proof,
       0,
-      true
+      true,
+      {value: verifyCostWei}
     );
   });
 
@@ -239,7 +246,8 @@ describe('Proofs', () => {
       testnet3.header,
       '0x' + proof,
       0,
-      true
+      true,
+      {value: verifyCostWei}
     );
   });
 
@@ -279,7 +287,8 @@ describe('Proofs', () => {
       '0x' + mainnet1.header,
       '0x' + proof,
       0,
-      true
+      true,
+      {value: verifyCostWei}
     );
   });
 });

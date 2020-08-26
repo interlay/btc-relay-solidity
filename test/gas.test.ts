@@ -32,7 +32,7 @@ describe('Gas', () => {
       await relay.deployTransaction.wait(1)
     ).gasUsed?.toNumber();
     // console.log(`Deploy: ${deployCost}`);
-    expect(deployCost).to.be.lt(2_000_000);
+    expect(deployCost).to.be.lt(2_300_000);
 
     const result = await relay.submitBlockHeader(header1);
     const updateCost = (await result.wait(1)).gasUsed?.toNumber();

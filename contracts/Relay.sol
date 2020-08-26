@@ -2,6 +2,7 @@
 
 pragma solidity ^0.6.0;
 
+import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
 import {SafeMath} from '@openzeppelin/contracts/math/SafeMath.sol';
 import {BytesLib} from '@interlay/bitcoin-spv-sol/contracts/BytesLib.sol';
 import {BTCUtils} from '@interlay/bitcoin-spv-sol/contracts/BTCUtils.sol';
@@ -9,7 +10,7 @@ import {ValidateSPV} from '@interlay/bitcoin-spv-sol/contracts/ValidateSPV.sol';
 import {IRelay} from './IRelay.sol';
 
 /// @title BTC Relay
-contract Relay is IRelay {
+contract Relay is IRelay, Ownable {
     using SafeMath for uint256;
     using BytesLib for bytes;
     using BTCUtils for bytes;
@@ -19,6 +20,8 @@ contract Relay is IRelay {
         uint32 height;
         // identifier of chain fork
         uint64 chainId;
+        // relayer account
+        address payable author;
     }
 
     // mapping of block hashes to block headers (ALL ever submitted, i.e., incl. forks)
@@ -56,6 +59,8 @@ contract Relay is IRelay {
     uint256 public constant MAIN_CHAIN_ID = 0;
     uint256 public constant CONFIRMATIONS = 6;
 
+    uint256 public verifyCostWei = 106000;
+
     // EXCEPTION MESSAGES
     // OPTIMIZATION: limit string length to 32 bytes
     string
@@ -76,13 +81,14 @@ contract Relay is IRelay {
     string internal constant ERR_CONFIRMS = 'Insufficient confirmations';
     string internal constant ERR_VERIFY_TX = 'Incorrect merkle proof';
     string internal constant ERR_INVALID_TXID = 'Invalid tx identifier';
+    string internal constant ERR_INSUFFICIENT_PAYMENT = 'Insufficient payment';
 
     /**
      * @notice Initializes the relay with the provided block.
      * @param header Genesis block header
      * @param height Genesis block height
      */
-    constructor(bytes memory header, uint32 height) public {
+    constructor(bytes memory header, uint32 height) public Ownable() {
         require(header.length == 80, ERR_INVALID_HEADER_SIZE);
         require(height > 0, ERR_INVALID_GENESIS_HEIGHT);
         bytes32 digest = header.hash256();
@@ -101,13 +107,20 @@ contract Relay is IRelay {
         _epochEndTarget = target;
         _epochEndTime = timestamp;
 
-        _storeBlockHeader(digest, height, chainId);
+        _storeBlockHeader(msg.sender, digest, height, chainId);
+    }
+
+    function setVerifyCostWei(uint256 price) external onlyOwner {
+        verifyCostWei = price;
     }
 
     /**
      * @dev Core logic for block header validation
      */
-    function _submitBlockHeader(bytes memory header) internal virtual {
+    function _submitBlockHeader(address payable author, bytes memory header)
+        internal
+        virtual
+    {
         require(header.length == 80, ERR_INVALID_HEADER_SIZE);
 
         // Fail if block already exists
@@ -161,9 +174,9 @@ contract Relay is IRelay {
             chainId = _incrementChainCounter();
             _initializeFork(hashCurrBlock, hashPrevBlock, chainId, height);
 
-            _storeBlockHeader(hashCurrBlock, height, chainId);
+            _storeBlockHeader(author, hashCurrBlock, height, chainId);
         } else {
-            _storeBlockHeader(hashCurrBlock, height, chainId);
+            _storeBlockHeader(author, hashCurrBlock, height, chainId);
 
             if (chainId == MAIN_CHAIN_ID) {
                 _bestBlock = hashCurrBlock;
@@ -187,7 +200,7 @@ contract Relay is IRelay {
      * @dev See {IRelay-submitBlockHeader}.
      */
     function submitBlockHeader(bytes calldata header) external override {
-        _submitBlockHeader(header);
+        _submitBlockHeader(msg.sender, header);
     }
 
     /**
@@ -198,11 +211,12 @@ contract Relay is IRelay {
 
         for (uint256 i = 0; i < headers.length / 80; i = i.add(1)) {
             bytes memory header = headers.slice(i.mul(80), 80);
-            _submitBlockHeader(header);
+            _submitBlockHeader(msg.sender, header);
         }
     }
 
     function _storeBlockHeader(
+        address payable author,
         bytes32 digest,
         uint32 height,
         uint256 chainId
@@ -210,6 +224,7 @@ contract Relay is IRelay {
         _chain[height] = digest;
         _headers[digest].height = height;
         _headers[digest].chainId = uint64(chainId);
+        _headers[digest].author = author;
         emit StoreHeader(digest, height);
     }
 
@@ -371,7 +386,7 @@ contract Relay is IRelay {
         bytes calldata proof,
         uint256 confirmations,
         bool insecure
-    ) external override view returns (bool) {
+    ) external override payable {
         // txid must be little endian
         require(txid != 0, ERR_INVALID_TXID);
 
@@ -382,9 +397,12 @@ contract Relay is IRelay {
         }
 
         require(_chain[height] == header.hash256(), ERR_BLOCK_NOT_FOUND);
+
+        // recoup fees
+        require(msg.value >= verifyCostWei, ERR_INSUFFICIENT_PAYMENT);
+        _headers[_chain[height]].author.transfer(msg.value);
+
         bytes32 root = header.extractMerkleRootLE().toBytes32();
         require(ValidateSPV.prove(txid, root, proof, index), ERR_VERIFY_TX);
-
-        return true;
     }
 }
