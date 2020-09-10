@@ -10,8 +10,8 @@ import {DeployTestRelay, Genesis} from './contracts';
 
 const testnet: Genesis = {
   header:
-    '0x00000020c444fc26fbbca50d0484e1e3c9b29a2b8d0a05760ad3e13b3021000000000000bb9978badf7aa4759cce15c01c232db7ee2e3592df5b37d5f546a57c55ef49cbc295475fc0ff3f1a636a0f95',
-  height: 1826888
+    '0x00008020ecf48ce8284da3c36ddc69de7c118da103e4fc472cc809776d010000000000002dd448283fa847e88b26669234a99c2b50c325be38431d34fd6a70ec374a56fc3dec595f02a6021a28aa35fd',
+  height: 1832789
 };
 
 // const regtest: Genesis = {
