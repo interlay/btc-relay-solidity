@@ -1,8 +1,8 @@
-import {ethers} from '@nomiclabs/buidler';
+const { ethers } = require("hardhat");
 import {Signer, Wallet} from 'ethers';
 import chai from 'chai';
 import {deployContract, solidity} from 'ethereum-waffle';
-import Artifact from '../artifacts/ScriptDelegate.json';
+import Artifact from '../artifacts/contracts/ScriptDelegate.sol/ScriptDelegate.json';
 import {ScriptDelegate} from '../typechain/ScriptDelegate';
 import * as bech32 from 'bech32';
 
@@ -14,7 +14,7 @@ describe('Scripts', () => {
   let parser: ScriptDelegate;
 
   beforeEach(async () => {
-    signers = await ethers.signers();
+    signers = await ethers.getSigners();
     parser = (await deployContract(
       signers[0] as Wallet,
       Artifact,

@@ -1,9 +1,7 @@
-import {usePlugin} from '@nomiclabs/buidler/config';
-
-usePlugin('@nomiclabs/buidler-ganache');
-usePlugin('@nomiclabs/buidler-waffle');
-usePlugin('buidler-typechain');
-usePlugin('buidler-gas-reporter');
+require('@nomiclabs/hardhat-ganache');
+require('@nomiclabs/hardhat-waffle');
+require('hardhat-typechain');
+// require('buidler-gas-reporter');
 
 const INFURA_API_KEY = process.env.INFURA_API_KEY || '';
 const ROPSTEN_PRIVATE_KEY = process.env.ROPSTEN_PRIVATE_KEY || '';
@@ -11,8 +9,8 @@ const ROPSTEN_PRIVATE_KEY = process.env.ROPSTEN_PRIVATE_KEY || '';
 const COINMARKETCAP_API_KEY = process.env.COINMARKETCAP_API_KEY;
 
 const config = {
-  defaultNetwork: 'buidlerevm',
-  solc: {
+  defaultNetwork: 'hardhat',
+  solidity: {
     version: '0.6.6',
     optimizer: {enabled: true, runs: 500}
   },
@@ -21,11 +19,11 @@ const config = {
     tests: './test'
   },
   typechain: {
-    outDir: 'typechain',
-    target: 'ethers'
+    outDir: './typechain',
+    target: 'ethers-v5'
   },
   networks: {
-    buidlerevm: {},
+    hardhat: {},
     ganache: {
       url: 'http://127.0.0.1:8545',
       mnemonic:

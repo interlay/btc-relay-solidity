@@ -1,11 +1,11 @@
-import {ethers} from '@nomiclabs/buidler';
+const { ethers } = require("hardhat");
 import {Signer} from 'ethers';
 import chai from 'chai';
 import {solidity} from 'ethereum-waffle';
 import {Relay} from '../typechain/Relay';
 import {ErrorCode} from './constants';
 import {RelayFactory} from '../typechain/RelayFactory';
-import {Arrayish} from 'ethers/utils';
+import {BytesLike} from 'ethers';
 import * as bitcoin from 'bitcoinjs-lib';
 
 chai.use(solidity);
@@ -13,7 +13,7 @@ const {expect} = chai;
 
 function deploy(
   signer: Signer,
-  header: Arrayish,
+  header: BytesLike,
   height: number
 ): Promise<Relay> {
   const factory = new RelayFactory(signer);
@@ -31,7 +31,7 @@ describe('Relay', () => {
   const genesisHeight = 562621;
 
   beforeEach(async () => {
-    signers = await ethers.signers();
+    signers = await ethers.getSigners();
     relay = await deploy(signers[0], genesisHeader, genesisHeight);
   });
 
@@ -222,7 +222,7 @@ describe('Relay (Batch)', () => {
   const genesisHeight = 1780500;
 
   beforeEach(async () => {
-    signers = await ethers.signers();
+    signers = await ethers.getSigners();
     relay = await deploy(signers[0], '0x' + headers[0], genesisHeight);
   });
 

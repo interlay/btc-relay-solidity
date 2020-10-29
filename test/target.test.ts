@@ -1,8 +1,8 @@
-import {ethers} from '@nomiclabs/buidler';
+const { ethers } = require("hardhat");
 import {Signer, Wallet} from 'ethers';
 import chai from 'chai';
 import {deployContract, solidity} from 'ethereum-waffle';
-import RelayArtifact from '../artifacts/Relay.json';
+import RelayArtifact from '../artifacts/contracts/Relay.sol/Relay.json';
 import {Relay} from '../typechain/Relay';
 
 chai.use(solidity);
@@ -13,7 +13,7 @@ describe('Retarget', () => {
   let relay: Relay;
 
   beforeEach(async () => {
-    signers = await ethers.signers();
+    signers = await ethers.getSigners();
     const genesis =
       '0x000040202842774747733a4863b6bbb7b4cfb66baa9287d5ce0d13000000000000000000df550e01d02ee37fce8dd2fbf919a47b8b65684bcb48d4da699078916da2f7decbc7905ebc2013178f58d533';
     relay = (await deployContract(signers[0] as Wallet, RelayArtifact, [

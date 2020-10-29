@@ -1,4 +1,4 @@
-import {ethers} from '@nomiclabs/buidler';
+const { ethers } = require("hardhat");
 import chai from 'chai';
 import {solidity} from 'ethereum-waffle';
 import {genesis, generate} from '../scripts/builder';
@@ -10,7 +10,7 @@ const {expect} = chai;
 describe('Build', () => {
   it('should build and store headers', async () => {
     let block = genesis();
-    const signers = await ethers.signers();
+    const signers = await ethers.getSigners();
     const contract = await DeployTestRelay(signers[0], {
       header: '0x' + block.toHex(true),
       height: 1
