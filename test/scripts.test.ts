@@ -1,4 +1,4 @@
-const { ethers } = require("hardhat");
+const {ethers} = require('hardhat');
 import {Signer, Wallet} from 'ethers';
 import chai from 'chai';
 import {deployContract, solidity} from 'ethereum-waffle';

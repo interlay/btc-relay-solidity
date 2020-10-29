@@ -327,8 +327,8 @@ contract Relay is IRelay {
      */
     function getBlockHeight(bytes32 digest)
         external
-        override
         view
+        override
         returns (uint32)
     {
         return _headers[digest].height;
@@ -339,8 +339,8 @@ contract Relay is IRelay {
      */
     function getBlockHash(uint32 height)
         external
-        override
         view
+        override
         returns (bytes32)
     {
         bytes32 digest = _chain[height];
@@ -353,8 +353,8 @@ contract Relay is IRelay {
      */
     function getBestBlock()
         external
-        override
         view
+        override
         returns (bytes32 digest, uint32 height)
     {
         return (_bestBlock, _bestHeight);
@@ -371,7 +371,7 @@ contract Relay is IRelay {
         bytes calldata proof,
         uint256 confirmations,
         bool insecure
-    ) external override view returns (bool) {
+    ) external view override returns (bool) {
         // txid must be little endian
         require(txid != 0, ERR_INVALID_TXID);
 
