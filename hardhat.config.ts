@@ -1,6 +1,7 @@
 require('@nomiclabs/hardhat-ganache');
 require('@nomiclabs/hardhat-waffle');
 require('hardhat-typechain');
+import "@nomiclabs/hardhat-ethers";
 // require('buidler-gas-reporter');
 
 const INFURA_API_KEY = process.env.INFURA_API_KEY || '';

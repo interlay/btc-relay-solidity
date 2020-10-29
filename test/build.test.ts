@@ -1,4 +1,4 @@
-const {ethers} = require('hardhat');
+import {ethers} from 'hardhat';
 import chai from 'chai';
 import {solidity} from 'ethereum-waffle';
 import {genesis, generate} from '../scripts/builder';

@@ -1,5 +1,4 @@
 /* eslint-disable no-console */
-// @ts-ignore
 import {ethers} from 'hardhat';
 import {DeployTestRelay, Genesis} from './contracts';
 
