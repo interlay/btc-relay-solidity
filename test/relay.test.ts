@@ -67,7 +67,7 @@ describe('Relay', () => {
   });
 
   it('should fail with block header > 80', async () => {
-    const result = relay.submitBlockHeader(header1 + '123');
+    const result = relay.submitBlockHeader(header1 + '1234');
     await expect(result).to.be.revertedWith(ErrorCode.ERR_INVALID_HEADER_SIZE);
   });
 
