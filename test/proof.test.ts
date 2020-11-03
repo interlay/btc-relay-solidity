@@ -1,11 +1,11 @@
-import {ethers} from '@nomiclabs/buidler';
+import {ethers} from 'hardhat';
 import {Signer} from 'ethers';
 import chai from 'chai';
 import {solidity} from 'ethereum-waffle';
 import {Relay} from '../typechain/Relay';
 import {RelayFactory} from '../typechain/RelayFactory';
 import {ErrorCode} from './constants';
-import {Arrayish} from 'ethers/utils';
+import {BytesLike} from 'ethers';
 
 chai.use(solidity);
 const {expect} = chai;
@@ -17,7 +17,7 @@ async function getBestBlockHeight(relay: Relay): Promise<number> {
 
 function deploy(
   signer: Signer,
-  header: Arrayish,
+  header: BytesLike,
   height: number
 ): Promise<Relay> {
   const factory = new RelayFactory(signer);
@@ -33,7 +33,7 @@ describe('Proofs', () => {
     '0x0000c020c238b601308b7297346ab2ed59942d7d7ecea8d23a1001000000000000000000b61ac92842abc82aa93644b190fc18ad46c6738337e78bc0c69ab21c5d5ee2ddd6376d5d3e211a17d8706a84';
 
   beforeEach(async () => {
-    signers = await ethers.signers();
+    signers = await ethers.getSigners();
     relay = await deploy(signers[0], genesisHeader, 5);
   });
 

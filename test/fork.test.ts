@@ -1,8 +1,8 @@
-import {ethers} from '@nomiclabs/buidler';
+import {ethers} from 'hardhat';
 import {Signer, Wallet} from 'ethers';
 import chai from 'chai';
 import {deployContract, solidity} from 'ethereum-waffle';
-import RelayArtifact from '../artifacts/Relay.json';
+import RelayArtifact from '../artifacts/contracts/Relay.sol/Relay.json';
 import {Relay} from '../typechain/Relay';
 
 chai.use(solidity);
@@ -18,7 +18,7 @@ describe('Forking', () => {
   let relay: Relay;
 
   beforeEach(async () => {
-    signers = await ethers.signers();
+    signers = await ethers.getSigners();
     const genesis =
       '0x00000020db62962b5989325f30f357762ae456b2ec340432278e14000000000000000000d1dd4e30908c361dfeabfb1e560281c1a270bde3c8719dbda7c848005317594440bf615c886f2e17bd6b082d';
     relay = (await deployContract(signers[0] as Wallet, RelayArtifact, [

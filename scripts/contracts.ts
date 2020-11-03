@@ -1,8 +1,8 @@
 import {Signer, Contract} from 'ethers';
 import {TestRelayFactory} from '../typechain/TestRelayFactory';
 import {RelayFactory} from '../typechain/RelayFactory';
-import {TypedFunctionDescription} from '../typechain';
-import {TransactionReceipt} from 'ethers/providers';
+// import {FunctionDescription} from '../typechain'
+// import {TransactionReceipt} from 'ethers/providers';
 import {Relay} from '../typechain/Relay';
 import {TestRelay} from '../typechain/TestRelay';
 
@@ -30,16 +30,16 @@ export async function DeployTestRelay(
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function Call<C extends Contract, T extends any[]>(
-  signer: Signer,
-  contract: C,
-  func: TypedFunctionDescription<{encode: (arg0: T) => string}>,
-  args: T
-): Promise<TransactionReceipt> {
-  const call = contract.interface.functions[func.name].encode(args);
-  const response = await signer.sendTransaction({
-    to: contract.address,
-    data: call
-  });
-  return response.wait(0);
-}
+// export async function Call<C extends Contract, T extends any[]>(
+//   signer: Signer,
+//   contract: C,
+//   func: FunctionDescription<{encode: (arg0: T) => string}>,
+//   args: T
+// ): Promise<TransactionReceipt> {
+//   const call = contract.interface.functions[func.name].encode(args);
+//   const response = await signer.sendTransaction({
+//     to: contract.address,
+//     data: call
+//   });
+//   return response.wait(0);
+// }

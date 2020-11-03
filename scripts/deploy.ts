@@ -1,6 +1,5 @@
 /* eslint-disable no-console */
-
-import {ethers} from '@nomiclabs/buidler';
+import {ethers} from 'hardhat';
 import {DeployTestRelay, Genesis} from './contracts';
 
 // const mainnet: Genesis = {
@@ -20,7 +19,7 @@ const testnet: Genesis = {
 // }
 
 async function main(genesis: Genesis): Promise<void> {
-  const signers = await ethers.signers();
+  const signers = await ethers.getSigners();
   const contract = await DeployTestRelay(signers[0], genesis);
   console.log(`Genesis height: ${genesis.height}`);
   console.log(`Contract address: ${contract.address}`);

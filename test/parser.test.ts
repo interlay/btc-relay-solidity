@@ -1,8 +1,8 @@
-import {ethers} from '@nomiclabs/buidler';
+import {ethers} from 'hardhat';
 import {Signer, Wallet} from 'ethers';
 import chai from 'chai';
 import {deployContract, solidity} from 'ethereum-waffle';
-import Artifact from '../artifacts/ParserDelegate.json';
+import Artifact from '../artifacts/contracts/ParserDelegate.sol/ParserDelegate.json';
 import {ParserDelegate} from '../typechain/ParserDelegate';
 
 chai.use(solidity);
@@ -17,7 +17,7 @@ describe('Parser', () => {
   let parser: ParserDelegate;
 
   beforeEach(async () => {
-    signers = await ethers.signers();
+    signers = await ethers.getSigners();
     parser = (await deployContract(
       signers[0] as Wallet,
       Artifact,

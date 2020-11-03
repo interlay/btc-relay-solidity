@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 
-import config from '../buidler.config';
+import config from '../hardhat.config';
 import * as child from 'child_process';
 
 const ganacheCmd = 'ganache-cli -d';
