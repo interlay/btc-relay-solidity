@@ -1,5 +1,9 @@
 # BTC-Relay 
 
+## Notice
+
+This repository is for educational purposes only. The BTC Relay is not audited and contains critical bugs. Don't use this in production.
+
 ## Relevant Repositories
 
 Our libs: 
